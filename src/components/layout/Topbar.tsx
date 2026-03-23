@@ -5,21 +5,25 @@ import { Badge } from "@/components/ui/badge"
 
 interface TopbarProps {
   title: string
+  searchQuery?: string
+  onSearchChange?: (value: string) => void
 }
 
-export function Topbar({ title }: TopbarProps) {
-  return (
-    <header className="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-6">
-      <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
-      
-      <div className="flex items-center gap-6">
-        <div className="relative w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-          <Input 
-            placeholder="Buscar por SKU o nombre..." 
-            className="pl-10 bg-gray-50 border-gray-200 focus-visible:ring-brand-600 rounded-full h-10 shadow-none hover:bg-gray-100 transition-colors"
-          />
-        </div>
+  export function Topbar({ title, searchQuery, onSearchChange }: TopbarProps) {
+    return (
+      <header className="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-6">
+        <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
+        
+        <div className="flex items-center gap-6">
+          <div className="relative w-96">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <Input 
+              placeholder="Buscar por SKU o nombre..." 
+              value={searchQuery}
+              onChange={(e) => onSearchChange?.(e.target.value)}
+              className="pl-10 bg-gray-50 border-gray-200 focus-visible:ring-brand-600 rounded-full h-10 shadow-none hover:bg-gray-100 transition-colors"
+            />
+          </div>
 
         <div className="flex items-center gap-4">
           <button className="relative text-gray-500 hover:text-gray-900 transition-colors">
