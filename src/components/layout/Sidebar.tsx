@@ -1,8 +1,9 @@
 "use client"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { GraduationCap, LayoutGrid, Tag, Truck, BarChart2, Settings } from "lucide-react"
+import { LayoutGrid, Tag, Truck, BarChart2, Settings } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import Image from "next/image"
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -19,15 +20,16 @@ export function Sidebar() {
     <aside className="fixed top-0 left-0 h-screen w-60 border-r border-gray-200 bg-white flex flex-col justify-between">
       <div>
         {/* Logo */}
-        <div className="h-16 flex items-center px-6 border-b border-transparent">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-brand-600 rounded-md flex items-center justify-center text-white">
-              <GraduationCap size={20} />
-            </div>
-            <div>
-              <h1 className="font-bold text-lg text-gray-900 leading-none">Braymar</h1>
-              <span className="text-xs text-gray-500">School Distributor</span>
-            </div>
+        <div className="h-20 border-b border-transparent">
+          <Link href="/" className="block w-full h-full">
+            <Image
+              src="/braymar-logo.png"
+              alt="Braymar Logo"
+              width={240}
+              height={80}
+              className="w-full h-full object-contain object-center"
+              priority
+            />
           </Link>
         </div>
 
@@ -41,11 +43,10 @@ export function Sidebar() {
               <Link
                 key={link.name}
                 href={link.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-brand-600 text-white"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                }`}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${isActive
+                  ? "bg-brand-600 text-white"
+                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  }`}
               >
                 <Icon size={18} />
                 {link.name}
