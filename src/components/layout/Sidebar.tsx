@@ -111,7 +111,7 @@ export function Sidebar() {
               </ul>
               {/* Divisor sutil entre secciones (excepto la última) */}
               {idx < sections.length - 1 && (
-                <hr className="my-3 border-gray-150" />
+                <hr className="my-3 border-gray-200" />
               )}
             </div>
           ))}

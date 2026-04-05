@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase/client"
 import type { Product } from "@/types/inventory"
 
 function mapRow(row: Record<string, unknown>): Product {
+  const cat = (row.categories as Record<string, unknown> | null) ?? {}
   return {
     id: row.id as string,
     sku: row.sku as string,
@@ -12,7 +13,8 @@ function mapRow(row: Record<string, unknown>): Product {
     location: row.location as Product["location"],
     unitPrice: Number(row.unit_price),
     wholesalePrice: Number(row.wholesale_price),
-    category: row.category as string,
+    categoryId: row.category_id as string,
+    category: (cat.name as string) ?? "",
     imageUrl: row.image_url as string ?? undefined,
     unitsPerBox: row.units_per_box ? Number(row.units_per_box) : undefined,
   }
@@ -25,7 +27,7 @@ export function useProducts() {
   const refresh = useCallback(async () => {
     const { data, error } = await supabase
       .from("products")
-      .select("*")
+      .select("*, categories(id, name)")
       .order("created_at", { ascending: false })
     if (!error && data) setProducts(data.map(mapRow))
   }, [])

@@ -9,10 +9,13 @@ import { SaleStats } from "@/components/ventas/SaleStats"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import type { Product } from "@/types/inventory"
+import type { Product, Location } from "@/types/inventory"
 import type { CartItem as CartItemType, PaymentMethod, Sale } from "@/types/sales"
 
 import { mockMovements } from "@/data/mock-movements"
+
+// Fallback location typed as Location
+const DEFAULT_LOCATION: Location = "Almacén Tienda"
 
 // Vista: "pos" para punto de venta, "history" para historial de ventas
 type VentasView = "pos" | "history"
@@ -38,10 +41,11 @@ export default function VentasPage() {
               name: m.productName,
               stock: 100,
               stockStatus: "optimo" as const,
-              location: m.toLocation ?? m.fromLocation ?? "Almacen Tienda",
+              location: m.toLocation ?? m.fromLocation ?? DEFAULT_LOCATION,
               unitPrice: parseFloat((Math.random() * 20 + 5).toFixed(2)),
               wholesalePrice: parseFloat((Math.random() * 15 + 3).toFixed(2)),
               category: "General",
+              categoryId: "",
             },
           ]),
         ).values(),

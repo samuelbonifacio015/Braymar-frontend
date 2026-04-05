@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { StockBadge } from "./StockBadge"
-import { Product, Location, StockStatus } from "@/types/inventory"
+import { Product, Location, StockStatus, Category } from "@/types/inventory"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getStockStatus } from "@/lib/inventory"
 import { updateProduct, deleteProduct } from "@/actions/inventory"
+import { useCategories } from "@/hooks/use-categories"
 import { useRouter } from "next/navigation"
 
 interface ProductTableProps {
@@ -27,6 +28,7 @@ interface ProductTableProps {
 }
 
 export function ProductTable({ products, onShowPrice }: ProductTableProps) {
+  const { categories } = useCategories()
   const router = useRouter()
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [historyProduct, setHistoryProduct] = useState<Product | null>(null)
@@ -38,22 +40,10 @@ export function ProductTable({ products, onShowPrice }: ProductTableProps) {
 
   const handleSaveEdit = async () => {
     if (!editingProduct) return
-    const fd = new FormData()
-    fd.set("name", editingProduct.name)
-    fd.set("category", editingProduct.category)
-    fd.set("location", editingProduct.location)
-    fd.set("stock", String(editingProduct.stock))
-    fd.set("unitPrice", String(editingProduct.unitPrice))
-    fd.set("wholesalePrice", String(editingProduct.wholesalePrice))
-    if (editingProduct.unitsPerBox) fd.set("unitsPerBox", String(editingProduct.unitsPerBox))
-    if (editImageFile) fd.set("image", editImageFile)
-    // send existing image URL if no new file
-    if (!editImageFile && editingProduct.imageUrl) fd.set("existingImageUrl", editingProduct.imageUrl)
-
     setSavePending(true)
     const res = await updateProduct(editingProduct.id, {
       name: editingProduct.name,
-      category: editingProduct.category,
+      categoryId: editingProduct.categoryId,
       location: editingProduct.location,
       stock: editingProduct.stock,
       unitPrice: editingProduct.unitPrice,
@@ -175,16 +165,15 @@ export function ProductTable({ products, onShowPrice }: ProductTableProps) {
                 <Input value={editingProduct.name} onChange={e => setEditingProduct({...editingProduct, name: e.target.value})} />
               </div>
 
-              {/* Row 2: SKU + Category */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">SKU</label>
-                  <Input value={editingProduct.sku} onChange={e => setEditingProduct({...editingProduct, sku: e.target.value})} />
-                </div>
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">Categoría *</label>
-                  <Input value={editingProduct.category} onChange={e => setEditingProduct({...editingProduct, category: e.target.value})} />
-                </div>
+              {/* Row 2: Category */}
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Categoría *</label>
+                <Select value={editingProduct.categoryId} onValueChange={(v: string | null) => v && setEditingProduct({...editingProduct, categoryId: v})}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectContent>
+                    {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Row 3: Location */}

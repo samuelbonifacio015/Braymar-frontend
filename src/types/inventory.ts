@@ -11,7 +11,8 @@ export interface Product {
   location: Location
   unitPrice: number
   wholesalePrice: number
-  category: string
+  categoryId: string
+  category: string  // denormalized — nombre derivado del join con categories
   imageUrl?: string
   unitsPerBox?: number    // unidades por caja/paquete
 }

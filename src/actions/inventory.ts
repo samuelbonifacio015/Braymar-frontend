@@ -6,6 +6,7 @@ import type { Product } from "@/types/inventory"
 import { getStockStatus } from "@/lib/inventory"
 
 async function mapRow(row: Record<string, unknown>): Promise<Product> {
+  const cat = (row.categories as Record<string, unknown> | null) ?? {}
   return {
     id: row.id as string,
     sku: row.sku as string,
@@ -15,7 +16,8 @@ async function mapRow(row: Record<string, unknown>): Promise<Product> {
     location: row.location as Product["location"],
     unitPrice: Number(row.unit_price),
     wholesalePrice: Number(row.wholesale_price),
-    category: row.category as string,
+    categoryId: row.category_id as string,
+    category: (cat.name as string) ?? "",
     imageUrl: row.image_url as string ?? undefined,
     unitsPerBox: row.units_per_box ? Number(row.units_per_box) : undefined,
   }
@@ -25,7 +27,7 @@ export async function getProducts(): Promise<Product[]> {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("products")
-    .select("*")
+    .select("*, categories(id, name)")
     .order("created_at", { ascending: false })
   if (error) {
     console.error("Failed to fetch products:", (error as { message?: string }).message)
@@ -37,7 +39,7 @@ export async function getProducts(): Promise<Product[]> {
 export async function addProduct(formData: FormData): Promise<{ success: boolean; error?: string }> {
   const name = (formData.get("name") as string)?.trim()
   const sku = (formData.get("sku") as string)?.trim()
-  const category = (formData.get("category") as string)?.trim()
+  const categoryId = (formData.get("categoryId") as string)?.trim()
   const location = formData.get("location") as string
   const stock = parseInt(formData.get("stock") as string) || 0
   const unitPrice = parseFloat(formData.get("unitPrice") as string) || 0
@@ -46,13 +48,18 @@ export async function addProduct(formData: FormData): Promise<{ success: boolean
   const imageFile = formData.get("image") as File | null
 
   if (!name) return { success: false, error: "El nombre es requerido" }
-  if (!category) return { success: false, error: "La categoría es requerida" }
+  if (!categoryId) return { success: false, error: "La categoría es requerida" }
   if (!location) return { success: false, error: "La ubicación es requerida" }
 
-  const finalSku = sku || `${category.substring(0, 2).toUpperCase()}-${Math.floor(10000 + Math.random() * 90000)}`
-  const stockStatus = getStockStatus(stock)
-
   const supabase = await createSupabaseServerClient()
+
+  // Fetch category name for denormalized column + SKU generation
+  const { data: catData } = await supabase.from("categories").select("name").eq("id", categoryId).single()
+  if (!catData) return { success: false, error: "Categoría no encontrada" }
+
+  const categoryName = catData.name as string
+  const finalSku = sku || `${categoryName.substring(0, 2).toUpperCase()}-${Math.floor(10000 + Math.random() * 90000)}`
+  const stockStatus = getStockStatus(stock)
 
   let imageUrl: string | undefined
 
@@ -77,7 +84,8 @@ export async function addProduct(formData: FormData): Promise<{ success: boolean
     location,
     unit_price: unitPrice,
     wholesale_price: wholesalePrice,
-    category,
+    category_id: categoryId,
+    category: categoryName,
     image_url: imageUrl,
     units_per_box: unitsPerBox,
   })
@@ -90,29 +98,38 @@ export async function addProduct(formData: FormData): Promise<{ success: boolean
 export async function updateProduct(
   id: string,
   updates: {
-    name?: string; category?: string; location?: string; stock?: number;
+    name?: string; categoryId?: string; location?: string; stock?: number;
     unitPrice?: number; wholesalePrice?: number; imageUrl?: string;
     unitsPerBox?: number;
   }
 ): Promise<{ success: boolean; error?: string }> {
   const stockStatus = updates.stock !== undefined ? getStockStatus(updates.stock) : undefined
 
+  const db: Record<string, unknown> = {
+    ...(updates.name !== undefined && { name: updates.name }),
+    ...(updates.location !== undefined && { location: updates.location }),
+    ...(updates.stock !== undefined && { stock: updates.stock }),
+    ...(stockStatus && { stock_status: stockStatus }),
+    ...(updates.unitPrice !== undefined && { unit_price: updates.unitPrice }),
+    ...(updates.wholesalePrice !== undefined && { wholesale_price: updates.wholesalePrice }),
+    ...(updates.imageUrl !== undefined && { image_url: updates.imageUrl }),
+    ...(updates.unitsPerBox !== undefined && { units_per_box: updates.unitsPerBox }),
+    updated_at: new Date().toISOString(),
+  }
+
+  if (updates.categoryId !== undefined) {
+    const supabase = await createSupabaseServerClient()
+    const { data: catData } = await supabase.from("categories").select("name").eq("id", updates.categoryId).single()
+    if (catData) {
+      db.category_id = updates.categoryId
+      db.category = catData.name
+    }
+  }
+
+  if (Object.keys(db).length === 0) return { success: true }
+
   const supabase = await createSupabaseServerClient()
-  const { error } = await supabase
-    .from("products")
-    .update({
-      ...(updates.name !== undefined && { name: updates.name }),
-      ...(updates.category !== undefined && { category: updates.category }),
-      ...(updates.location !== undefined && { location: updates.location }),
-      ...(updates.stock !== undefined && { stock: updates.stock }),
-      ...(stockStatus && { stock_status: stockStatus }),
-      ...(updates.unitPrice !== undefined && { unit_price: updates.unitPrice }),
-      ...(updates.wholesalePrice !== undefined && { wholesale_price: updates.wholesalePrice }),
-      ...(updates.imageUrl !== undefined && { image_url: updates.imageUrl }),
-      ...(updates.unitsPerBox !== undefined && { units_per_box: updates.unitsPerBox }),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", id)
+  const { error } = await supabase.from("products").update(db).eq("id", id)
 
   if (error) return { success: false, error: (error as { message?: string }).message }
   revalidatePath("/inventario")

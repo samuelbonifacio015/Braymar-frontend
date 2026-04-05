@@ -16,6 +16,7 @@ import { FileText,Download,Plus,ListTree,LayoutGrid,Columns,List,Upload } from "
 import { Product, Location } from "@/types/inventory"
 import { addProduct } from "@/actions/inventory"
 import { useProducts } from "@/hooks/use-products"
+import { useCategories } from "@/hooks/use-categories"
 import { computeInventoryStats } from "@/lib/inventory"
 
 export type ViewMode = "list" | "grid" | "column" | "location"
@@ -29,6 +30,7 @@ const VIEW_OPTIONS: { value: ViewMode; label: string; icon: React.ElementType }[
 
 export default function InventarioPage() {
   const { products, loading, refresh } = useProducts()
+  const { categories } = useCategories()
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("todas")
   const [locationFilter, setLocationFilter] = useState("todas")
@@ -40,7 +42,7 @@ export default function InventarioPage() {
   const [newProduct, setNewProduct] = useState({
     name: "",
     sku: "",
-    category: "",
+    categoryId: "",
     location: "Almacén Tienda" as Location,
     stock: 0,
     unitPrice: 0,
@@ -55,7 +57,7 @@ export default function InventarioPage() {
   const [priceProduct, setPriceProduct] = useState<Product | null>(null)
   const stats = useMemo(() => computeInventoryStats(products), [products])
 
-  const categories = useMemo(() => [...new Set(products.map((p: Product) => p.category))], [products])
+  const filterCategories = useMemo(() => [...new Set(products.map((p: Product) => p.category))], [products])
 
   const filteredProducts = useMemo(() => {
     return products.filter((p: Product) => {
@@ -84,11 +86,11 @@ export default function InventarioPage() {
   }, [])
 
   const onAddProduct = useCallback(async () => {
-    if (!newProduct.name || !newProduct.category) return
+    if (!newProduct.name || !newProduct.categoryId) return
     const fd = new FormData()
     fd.set("name", newProduct.name)
     fd.set("sku", newProduct.sku)
-    fd.set("category", newProduct.category)
+    fd.set("categoryId", newProduct.categoryId)
     fd.set("location", newProduct.location)
     fd.set("stock", String(newProduct.stock))
     fd.set("unitPrice", String(newProduct.unitPrice))
@@ -101,7 +103,7 @@ export default function InventarioPage() {
     if (res.success) {
       setIsAddOpen(false)
       setImageFile(null)
-      setNewProduct({ name: "", sku: "", category: "", location: "Almacén Tienda", stock: 0, unitPrice: 0, wholesalePrice: 0, unitsPerBox: "" })
+      setNewProduct({ name: "", sku: "", categoryId: "", location: "Almacén Tienda", stock: 0, unitPrice: 0, wholesalePrice: 0, unitsPerBox: "" })
       await refresh()
     }
   }, [newProduct, imageFile, refresh])
@@ -149,7 +151,12 @@ export default function InventarioPage() {
                         </div>
                         <div className="grid gap-2">
                           <label className="text-sm font-medium">Categoría *</label>
-                          <Input value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} placeholder="Ej. Cuadernos" />
+                          <Select value={newProduct.categoryId} onValueChange={(v: string | null) => v && setNewProduct({...newProduct, categoryId: v})}>
+                            <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                            <SelectContent>
+                              {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
 
@@ -254,7 +261,7 @@ export default function InventarioPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todas">Categoría: Todas</SelectItem>
-                  {categories.map((c: string) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  {filterCategories.map((c: string) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={locationFilter} onValueChange={onFilterChange(setLocationFilter)}>
