@@ -14,6 +14,7 @@ function mapRow(row: Record<string, unknown>): Product {
     wholesalePrice: Number(row.wholesale_price),
     category: row.category as string,
     imageUrl: row.image_url as string ?? undefined,
+    unitsPerBox: row.units_per_box ? Number(row.units_per_box) : undefined,
   }
 }
 

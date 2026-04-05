@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Pencil, Clock, Trash2, DollarSign } from "lucide-react"
+import { useState, useRef } from "react"
+import { Pencil, Clock, Trash2, DollarSign, Upload } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -33,10 +33,23 @@ export function ProductTable({ products, onShowPrice }: ProductTableProps) {
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null)
   const [savePending, setSavePending] = useState(false)
   const [deletePending, setDeletePending] = useState(false)
+  const [editImageFile, setEditImageFile] = useState<File | null>(null)
+  const editFileInputRef = useRef<HTMLInputElement>(null)
 
   const handleSaveEdit = async () => {
     if (!editingProduct) return
-    const status = getStockStatus(editingProduct.stock)
+    const fd = new FormData()
+    fd.set("name", editingProduct.name)
+    fd.set("category", editingProduct.category)
+    fd.set("location", editingProduct.location)
+    fd.set("stock", String(editingProduct.stock))
+    fd.set("unitPrice", String(editingProduct.unitPrice))
+    fd.set("wholesalePrice", String(editingProduct.wholesalePrice))
+    if (editingProduct.unitsPerBox) fd.set("unitsPerBox", String(editingProduct.unitsPerBox))
+    if (editImageFile) fd.set("image", editImageFile)
+    // send existing image URL if no new file
+    if (!editImageFile && editingProduct.imageUrl) fd.set("existingImageUrl", editingProduct.imageUrl)
+
     setSavePending(true)
     const res = await updateProduct(editingProduct.id, {
       name: editingProduct.name,
@@ -44,10 +57,13 @@ export function ProductTable({ products, onShowPrice }: ProductTableProps) {
       location: editingProduct.location,
       stock: editingProduct.stock,
       unitPrice: editingProduct.unitPrice,
+      wholesalePrice: editingProduct.wholesalePrice,
+      unitsPerBox: editingProduct.unitsPerBox,
     })
     setSavePending(false)
     if (res.success) {
       setEditingProduct(null)
+      setEditImageFile(null)
       router.refresh()
     }
   }
@@ -126,7 +142,7 @@ export function ProductTable({ products, onShowPrice }: ProductTableProps) {
                           <DollarSign size={18} />
                         </button>
                       )}
-                      <button onClick={() => setEditingProduct(product)} className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-md transition-colors" title="Editar">
+                      <button onClick={() => { setEditingProduct({...product}); setEditImageFile(null) }} className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-md transition-colors" title="Editar">
                         <Pencil size={18} />
                       </button>
                       <button onClick={() => setHistoryProduct(product)} className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-md transition-colors" title="Historial">
@@ -145,44 +161,87 @@ export function ProductTable({ products, onShowPrice }: ProductTableProps) {
       </div>
 
       {/* Edit Dialog */}
-      <Dialog open={!!editingProduct} onOpenChange={(open) => !open && setEditingProduct(null)}>
-        <DialogContent>
+      <Dialog open={!!editingProduct} onOpenChange={(open) => !open && (setEditingProduct(null), setEditImageFile(null))}>
+        <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle>Editar Producto</DialogTitle>
             <DialogDescription>Modifique los campos del producto y guarde los cambios.</DialogDescription>
           </DialogHeader>
           {editingProduct && (
-            <div className="grid gap-4 py-4">
+            <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
+              {/* Row 1: Name */}
               <div className="grid gap-2">
-                <label className="text-sm font-medium">Nombre</label>
+                <label className="text-sm font-medium">Nombre *</label>
                 <Input value={editingProduct.name} onChange={e => setEditingProduct({...editingProduct, name: e.target.value})} />
               </div>
+
+              {/* Row 2: SKU + Category */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <label className="text-sm font-medium">Categoría</label>
-                  <Input value={editingProduct.category} onChange={e => setEditingProduct({...editingProduct, category: e.target.value})} />
+                  <label className="text-sm font-medium">SKU</label>
+                  <Input value={editingProduct.sku} onChange={e => setEditingProduct({...editingProduct, sku: e.target.value})} />
                 </div>
                 <div className="grid gap-2">
-                  <label className="text-sm font-medium">Ubicación</label>
-                  <Select value={editingProduct.location} onValueChange={(v: string | null) => v && setEditingProduct({...editingProduct, location: v as Location})}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Almacén Tienda">Almacén Tienda</SelectItem>
-                      <SelectItem value="Cochera">Cochera</SelectItem>
-                      <SelectItem value="Cangallo">Cangallo</SelectItem>
-                      <SelectItem value="Santa Anita">Santa Anita</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <label className="text-sm font-medium">Categoría *</label>
+                  <Input value={editingProduct.category} onChange={e => setEditingProduct({...editingProduct, category: e.target.value})} />
                 </div>
               </div>
+
+              {/* Row 3: Location */}
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Ubicación *</label>
+                <Select value={editingProduct.location} onValueChange={(v: string | null) => v && setEditingProduct({...editingProduct, location: v as Location})}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Almacén Tienda">Almacén Tienda</SelectItem>
+                    <SelectItem value="Cochera">Cochera</SelectItem>
+                    <SelectItem value="Cangallo">Cangallo</SelectItem>
+                    <SelectItem value="Santa Anita">Santa Anita</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Row 4: Stock + Unit Price */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <label className="text-sm font-medium">Stock</label>
-                  <Input type="number" value={editingProduct.stock} onChange={e => setEditingProduct({...editingProduct, stock: parseInt(e.target.value) || 0})} />
+                  <Input type="number" min="0" value={editingProduct.stock} onChange={e => setEditingProduct({...editingProduct, stock: parseInt(e.target.value) || 0})} />
                 </div>
                 <div className="grid gap-2">
-                  <label className="text-sm font-medium">Precio Unitario (S/)</label>
-                  <Input type="number" step="0.1" value={editingProduct.unitPrice} onChange={e => setEditingProduct({...editingProduct, unitPrice: parseFloat(e.target.value) || 0})} />
+                  <label className="text-sm font-medium">Precio Unit. (S/)</label>
+                  <Input type="number" step="0.01" value={editingProduct.unitPrice} onChange={e => setEditingProduct({...editingProduct, unitPrice: parseFloat(e.target.value) || 0})} />
+                </div>
+              </div>
+
+              {/* Row 5: Wholesale Price */}
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Precio Mayorista (S/)</label>
+                <Input type="number" step="0.01" value={editingProduct.wholesalePrice} onChange={e => setEditingProduct({...editingProduct, wholesalePrice: parseFloat(e.target.value) || 0})} />
+              </div>
+
+              {/* Row 6: Units per Box */}
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Unds. por caja</label>
+                <Input type="number" min="1" value={editingProduct.unitsPerBox ?? ""} onChange={e => setEditingProduct({...editingProduct, unitsPerBox: parseInt(e.target.value) || undefined})} placeholder="Ej. 24" />
+              </div>
+
+              {/* Row 7: Image */}
+              <input type="file" accept="image/*" ref={editFileInputRef} className="hidden" onChange={(e) => setEditImageFile(e.target.files?.[0] || null)} />
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Imagen del producto</label>
+                <div className="flex items-center gap-3">
+                  <Button type="button" variant="outline" size="sm" className="gap-2 h-9" onClick={() => editFileInputRef.current?.click()}>
+                    <Upload size={14} />
+                    {editImageFile ? editImageFile.name : editingProduct.imageUrl ? "Cambiar imagen" : "Seleccionar"}
+                  </Button>
+                  {(editingProduct.imageUrl || editImageFile) && (
+                    <span className="text-xs text-muted-foreground">
+                      {editImageFile
+                        ? `${(editImageFile.size / 1024).toFixed(1)} KB`
+                        : <img src={editingProduct.imageUrl} className="h-6 w-6 rounded object-cover inline-block mr-1" alt="" />}
+                      <button type="button" className="text-destructive underline ml-1" onClick={() => { setEditImageFile(null); setEditingProduct({...editingProduct, imageUrl: undefined}); editFileInputRef.current!.value = "" }}>Quitar</button>
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

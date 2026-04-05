@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useCallback } from "react"
+import { useState, useMemo, useCallback, useRef } from "react"
 import { Topbar } from "@/components/layout/Topbar"
 import { ProductTable } from "@/components/inventario/ProductTable"
 import { ProductGrid } from "@/components/inventario/ProductGrid"
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { FileText,Download,Plus,ListTree,LayoutGrid,Columns,List } from "lucide-react"
+import { FileText,Download,Plus,ListTree,LayoutGrid,Columns,List,Upload } from "lucide-react"
 import { Product, Location } from "@/types/inventory"
 import { addProduct } from "@/actions/inventory"
 import { useProducts } from "@/hooks/use-products"
@@ -39,11 +39,16 @@ export default function InventarioPage() {
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [newProduct, setNewProduct] = useState({
     name: "",
+    sku: "",
     category: "",
     location: "Almacén Tienda" as Location,
     stock: 0,
     unitPrice: 0,
+    wholesalePrice: 0,
+    unitsPerBox: "",
   })
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [addPending, setAddPending] = useState(false)
 
   const [viewMode, setViewMode] = useState<ViewMode>("list")
@@ -82,19 +87,24 @@ export default function InventarioPage() {
     if (!newProduct.name || !newProduct.category) return
     const fd = new FormData()
     fd.set("name", newProduct.name)
+    fd.set("sku", newProduct.sku)
     fd.set("category", newProduct.category)
     fd.set("location", newProduct.location)
     fd.set("stock", String(newProduct.stock))
     fd.set("unitPrice", String(newProduct.unitPrice))
+    fd.set("wholesalePrice", String(newProduct.wholesalePrice || 0))
+    fd.set("unitsPerBox", newProduct.unitsPerBox)
+    if (imageFile) fd.set("image", imageFile)
     setAddPending(true)
     const res = await addProduct(fd)
     setAddPending(false)
     if (res.success) {
       setIsAddOpen(false)
-      setNewProduct({ name: "", category: "", location: "Almacén Tienda", stock: 0, unitPrice: 0 })
+      setImageFile(null)
+      setNewProduct({ name: "", sku: "", category: "", location: "Almacén Tienda", stock: 0, unitPrice: 0, wholesalePrice: 0, unitsPerBox: "" })
       await refresh()
     }
-  }, [newProduct, refresh])
+  }, [newProduct, imageFile, refresh])
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -124,37 +134,75 @@ export default function InventarioPage() {
                       <DialogTitle>Añadir Nuevo Producto</DialogTitle>
                       <DialogDescription>Complete los datos del nuevo producto para agregarlo al inventario.</DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
+                    <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
+                      {/* Row 1: Name */}
                       <div className="grid gap-2">
-                        <label className="text-sm font-medium">Nombre</label>
-                        <Input value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} placeholder="Ej. Cuaderno rayado" />
+                        <label className="text-sm font-medium">Nombre *</label>
+                        <Input value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} placeholder="Ej. Cuaderno rayado A4" />
                       </div>
+
+                      {/* Row 2: SKU + Category */}
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                          <label className="text-sm font-medium">Categoría</label>
-                          <Input value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} placeholder="Ej. Cuadernos" />
+                          <label className="text-sm font-medium">SKU</label>
+                          <Input value={newProduct.sku} onChange={e => setNewProduct({...newProduct, sku: e.target.value})} placeholder="Auto-generado si vacio" />
                         </div>
                         <div className="grid gap-2">
-                          <label className="text-sm font-medium">Ubicación</label>
-                          <Select value={newProduct.location} onValueChange={(v: string | null) => v && setNewProduct({...newProduct, location: v as Location})}>
-                            <SelectTrigger><SelectValue placeholder="Ubicación" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Almacén Tienda">Almacén Tienda</SelectItem>
-                              <SelectItem value="Cochera">Cochera</SelectItem>
-                              <SelectItem value="Cangallo">Cangallo</SelectItem>
-                              <SelectItem value="Santa Anita">Santa Anita</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <label className="text-sm font-medium">Categoría *</label>
+                          <Input value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} placeholder="Ej. Cuadernos" />
                         </div>
                       </div>
+
+                      {/* Row 3: Location */}
+                      <div className="grid gap-2">
+                        <label className="text-sm font-medium">Ubicación *</label>
+                        <Select value={newProduct.location} onValueChange={(v: string | null) => v && setNewProduct({...newProduct, location: v as Location})}>
+                          <SelectTrigger><SelectValue placeholder="Ubicación" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Almacén Tienda">Almacén Tienda</SelectItem>
+                            <SelectItem value="Cochera">Cochera</SelectItem>
+                            <SelectItem value="Cangallo">Cangallo</SelectItem>
+                            <SelectItem value="Santa Anita">Santa Anita</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Row 4: Stock + Unit Price */}
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                           <label className="text-sm font-medium">Stock</label>
-                          <Input type="number" value={newProduct.stock === 0 ? "" : newProduct.stock} onChange={e => setNewProduct({...newProduct, stock: parseInt(e.target.value) || 0})} />
+                          <Input type="number" min="0" value={newProduct.stock === 0 ? "" : newProduct.stock} onChange={e => setNewProduct({...newProduct, stock: parseInt(e.target.value) || 0})} />
                         </div>
                         <div className="grid gap-2">
-                          <label className="text-sm font-medium">Precio Unitario (S/)</label>
-                          <Input type="number" step="0.1" value={newProduct.unitPrice === 0 ? "" : newProduct.unitPrice} onChange={e => setNewProduct({...newProduct, unitPrice: parseFloat(e.target.value) || 0})} />
+                          <label className="text-sm font-medium">Precio Unit. (S/)</label>
+                          <Input type="number" step="0.01" value={newProduct.unitPrice === 0 ? "" : newProduct.unitPrice} onChange={e => setNewProduct({...newProduct, unitPrice: parseFloat(e.target.value) || 0})} />
+                        </div>
+                      </div>
+
+                      {/* Row 5: Wholesale Price */}
+                      <div className="grid gap-2">
+                        <label className="text-sm font-medium">Precio Mayorista (S/)</label>
+                        <Input type="number" step="0.01" value={newProduct.wholesalePrice === 0 ? "" : newProduct.wholesalePrice} onChange={e => setNewProduct({...newProduct, wholesalePrice: parseFloat(e.target.value) || 0})} placeholder="85% del precio unit. por defecto" />
+                      </div>
+
+                      {/* Row 6: Units per Box */}
+                      <div className="grid gap-2">
+                        <label className="text-sm font-medium">Unds. por caja</label>
+                        <Input type="number" min="1" value={newProduct.unitsPerBox} onChange={e => setNewProduct({...newProduct, unitsPerBox: e.target.value})} placeholder="Ej. 24" />
+                      </div>
+
+                      {/* Row 7: Image upload */}
+                      <input type="file" accept="image/*" ref={fileInputRef} className="hidden" onChange={(e) => setImageFile(e.target.files?.[0] || null)} />
+                      <div className="grid gap-2">
+                        <label className="text-sm font-medium">Imagen del producto</label>
+                        <div className="flex items-center gap-3">
+                          <Button type="button" variant="outline" size="sm" className="gap-2 h-9" onClick={() => fileInputRef.current?.click()}>
+                            <Upload size={14} />
+                            {imageFile ? imageFile.name : "Seleccionar"}
+                          </Button>
+                          {imageFile && (
+                            <span className="text-xs text-muted-foreground">{(imageFile.size / 1024).toFixed(1)} KB — <button type="button" className="text-destructive underline" onClick={() => { setImageFile(null); fileInputRef.current!.value = "" }}>Quitar</button></span>
+                          )}
                         </div>
                       </div>
                     </div>

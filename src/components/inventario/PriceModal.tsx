@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Product } from "@/types/inventory"
 import { StockBadge } from "./StockBadge"
-import { DollarSign, Package, Weight, Tag } from "lucide-react"
+import { DollarSign, Package, Tag } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const PRESET_QTY = [1, 2, 3, 5, 10, 20]
@@ -13,11 +13,6 @@ interface PriceModalProps {
   product: Product | null
   open: boolean
   onOpenChange: (open: boolean) => void
-}
-
-function formatWeight(kg: number): string {
-  if (kg >= 1) return `${kg.toFixed(2)} kg`
-  return `${(kg * 1000).toFixed(0)} g`
 }
 
 export function PriceModal({ product, open, onOpenChange }: PriceModalProps) {
@@ -35,10 +30,8 @@ export function PriceModal({ product, open, onOpenChange }: PriceModalProps) {
 
   const unitPrice = product.unitPrice
   const wholesalePrice = product.wholesalePrice
-  const unitsPerBox = product.unitsPerBox ?? 20
-  const weightPerUnit = product.weightPerUnit ?? 0
+  const unitsPerBox = product.unitsPerBox ?? 1
 
-  // Calculate
   const subtotalRetail = unitPrice * quantity
   const wholesaleSubtotal = wholesalePrice * quantity
   const savings = subtotalRetail - wholesaleSubtotal
@@ -47,8 +40,6 @@ export function PriceModal({ product, open, onOpenChange }: PriceModalProps) {
     : "0"
 
   const boxPrice = wholesalePrice * unitsPerBox
-  const totalWeight = weightPerUnit * quantity
-  const boxWeight = weightPerUnit * unitsPerBox
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -71,22 +62,13 @@ export function PriceModal({ product, open, onOpenChange }: PriceModalProps) {
           </div>
         </DialogHeader>
 
-        {/* Stock & Weight Info */}
-        <div className="grid grid-cols-3 gap-3">
+        {/* Stock & Discount Info */}
+        <div className="grid grid-cols-2 gap-3">
           <div className="bg-muted/40 rounded-lg p-3 text-center">
             <p className="text-xs text-muted-foreground">Stock</p>
             <p className="text-lg font-bold tabular-nums">{product.stock}</p>
             <p className="text-[10px] text-muted-foreground">uds.</p>
           </div>
-          {weightPerUnit > 0 && (
-            <div className="bg-muted/40 rounded-lg p-3 text-center">
-              <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-                <Weight size={12} /> Peso/ud
-              </p>
-              <p className="text-lg font-bold tabular-nums">{formatWeight(weightPerUnit)}</p>
-              <p className="text-[10px] text-muted-foreground">caja: {formatWeight(boxWeight)}</p>
-            </div>
-          )}
           <div className="bg-muted/40 rounded-lg p-3 text-center">
             <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
               {unitsPerBox > 1 ? <Package size={12} /> : <Tag size={12} />} {unitsPerBox > 1 ? "x Caja" : "Desc."}
@@ -154,18 +136,6 @@ export function PriceModal({ product, open, onOpenChange }: PriceModalProps) {
                 <td className="py-3 px-4 text-right tabular-nums text-green-700 font-medium">S/ {wholesalePrice.toFixed(2)}</td>
                 <td className="py-3 px-4 text-right tabular-nums text-green-700 font-semibold">S/ {(wholesalePrice * quantity).toFixed(2)}</td>
               </tr>
-              {unitsPerBox > 1 && (
-                <tr className="bg-muted/30 hover:bg-muted/50 transition-colors">
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-medium text-sm">Caja ({unitsPerBox} uds)</span>
-                      <span className="text-[10px] text-muted-foreground">peso: {formatWeight(boxWeight)}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-right tabular-nums text-muted-foreground">—</td>
-                  <td className="py-3 px-4 text-right tabular-nums font-semibold">S/ {boxPrice.toFixed(2)}</td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
@@ -178,20 +148,6 @@ export function PriceModal({ product, open, onOpenChange }: PriceModalProps) {
           </div>
           <p className="text-xl font-bold text-brand-700 tabular-nums">S/ {savings.toFixed(2)}</p>
         </div>
-
-        {/* Weight Summary */}
-        {weightPerUnit > 0 && (
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Weight size={12} />
-              <span>Peso total: <strong className="text-foreground tabular-nums">{formatWeight(totalWeight)}</strong></span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Package size={12} />
-              <span>Peso caja: <strong className="text-foreground tabular-nums">{formatWeight(boxWeight)}</strong></span>
-            </div>
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   )
