@@ -1,4 +1,5 @@
 "use client"
+
 import { useState } from "react"
 import { Pencil, Clock, Trash2 } from "lucide-react"
 import {
@@ -11,38 +12,53 @@ import {
 } from "@/components/ui/table"
 import { StockBadge } from "./StockBadge"
 import { Product, Location, StockStatus } from "@/types/inventory"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { getStockStatus } from "@/lib/inventory"
+import { updateProduct, deleteProduct } from "@/actions/inventory"
+import { useRouter } from "next/navigation"
 
 interface ProductTableProps {
   products: Product[]
-  onUpdate: (p: Product) => void
-  onDelete: (id: string) => void
 }
 
-export function ProductTable({ products, onUpdate, onDelete }: ProductTableProps) {
+export function ProductTable({ products }: ProductTableProps) {
+  const router = useRouter()
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [historyProduct, setHistoryProduct] = useState<Product | null>(null)
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null)
+  const [savePending, setSavePending] = useState(false)
+  const [deletePending, setDeletePending] = useState(false)
 
-  const handleSaveEdit = () => {
-    if (editingProduct) {
-      let status: StockStatus = "optimo"
-      if (editingProduct.stock === 0) status = "agotado"
-      else if (editingProduct.stock <= 20) status = "bajo_stock"
-
-      onUpdate({ ...editingProduct, stockStatus: status })
+  const handleSaveEdit = async () => {
+    if (!editingProduct) return
+    const status = getStockStatus(editingProduct.stock)
+    setSavePending(true)
+    const res = await updateProduct(editingProduct.id, {
+      name: editingProduct.name,
+      category: editingProduct.category,
+      location: editingProduct.location,
+      stock: editingProduct.stock,
+      unitPrice: editingProduct.unitPrice,
+    })
+    setSavePending(false)
+    if (res.success) {
       setEditingProduct(null)
+      router.refresh()
     }
   }
 
-  const handleDelete = () => {
-    if (deletingProduct) {
-      onDelete(deletingProduct.id)
+  const handleDelete = async () => {
+    if (!deletingProduct) return
+    setDeletePending(true)
+    const res = await deleteProduct(deletingProduct.id)
+    setDeletePending(false)
+    if (res.success) {
       setDeletingProduct(null)
+      router.refresh()
     }
   }
 
@@ -127,6 +143,7 @@ export function ProductTable({ products, onUpdate, onDelete }: ProductTableProps
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Editar Producto</DialogTitle>
+            <DialogDescription>Modifique los campos del producto y guarde los cambios.</DialogDescription>
           </DialogHeader>
           {editingProduct && (
             <div className="grid gap-4 py-4">
@@ -141,7 +158,7 @@ export function ProductTable({ products, onUpdate, onDelete }: ProductTableProps
                 </div>
                 <div className="grid gap-2">
                   <label className="text-sm font-medium">Ubicación</label>
-                  <Select value={editingProduct.location} onValueChange={(v: Location) => setEditingProduct({...editingProduct, location: v})}>
+                  <Select value={editingProduct.location} onValueChange={(v: string | null) => v && setEditingProduct({...editingProduct, location: v as Location})}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Almacén Tienda">Almacén Tienda</SelectItem>
@@ -166,7 +183,9 @@ export function ProductTable({ products, onUpdate, onDelete }: ProductTableProps
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingProduct(null)}>Cancelar</Button>
-            <Button className="bg-brand-600 hover:bg-brand-700 text-white" onClick={handleSaveEdit}>Guardar Cambios</Button>
+            <Button className="bg-brand-600 hover:bg-brand-700 text-white" onClick={handleSaveEdit} disabled={savePending}>
+              {savePending ? "Guardando..." : "Guardar Cambios"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -195,7 +214,7 @@ export function ProductTable({ products, onUpdate, onDelete }: ProductTableProps
                       <TableCell className="text-sm text-gray-600">{entry.date}</TableCell>
                       <TableCell className="text-sm font-medium">{entry.type}</TableCell>
                       <TableCell className={`text-sm text-right font-medium ${entry.qty > 0 ? "text-green-600" : "text-red-600"}`}>
-                        {entry.qty > 0 ? `+${entry.qty}` : entry.qty}
+                        {entry.qty > 0 ? "+${entry.qty}" : entry.qty}
                       </TableCell>
                       <TableCell className="text-sm text-gray-600">{entry.loc}</TableCell>
                       <TableCell className="text-sm text-gray-500">{entry.user}</TableCell>
@@ -212,15 +231,15 @@ export function ProductTable({ products, onUpdate, onDelete }: ProductTableProps
       <AlertDialog open={!!deletingProduct} onOpenChange={(open) => !open && setDeletingProduct(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Está seguro de eliminar este producto?</AlertDialogTitle>
+            <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción eliminará el producto <strong>{deletingProduct?.name}</strong> con SKU <strong>{deletingProduct?.sku}</strong> permanentemente del inventario local. Esta acción no se puede deshacer.
+              Esta acción eliminará <strong>{deletingProduct?.name}</strong> (SKU: <strong>{deletingProduct?.sku}</strong>) permanentemente del inventario. Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction className="bg-red-600 text-white hover:bg-red-700" onClick={handleDelete}>
-              Eliminar Producto
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={handleDelete} disabled={deletePending}>
+              {deletePending ? "Eliminando..." : "Eliminar Producto"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
