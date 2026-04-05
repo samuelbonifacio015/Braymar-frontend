@@ -27,7 +27,7 @@ export async function getProducts(): Promise<Product[]> {
     .select("*")
     .order("created_at", { ascending: false })
   if (error) {
-    console.error("Failed to fetch products:", error.message)
+    console.error("Failed to fetch products:", (error as { message?: string }).message)
     return []
   }
   return data ? await Promise.all(data.map(mapRow)) : []
@@ -59,7 +59,7 @@ export async function addProduct(formData: FormData): Promise<{ success: boolean
     category,
   })
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: (error as { message?: string }).message }
   revalidatePath("/inventario")
   return { success: true }
 }
@@ -85,7 +85,7 @@ export async function updateProduct(
     })
     .eq("id", id)
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: (error as { message?: string }).message }
   revalidatePath("/inventario")
   return { success: true }
 }
@@ -93,7 +93,7 @@ export async function updateProduct(
 export async function deleteProduct(id: string): Promise<{ success: boolean; error?: string }> {
   const supabase = await createSupabaseServerClient()
   const { error } = await supabase.from("products").delete().eq("id", id)
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: (error as { message?: string }).message }
   revalidatePath("/inventario")
   return { success: true }
 }
