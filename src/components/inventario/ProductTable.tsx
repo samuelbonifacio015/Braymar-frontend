@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Pencil, Clock, Trash2 } from "lucide-react"
+import { Pencil, Clock, Trash2, DollarSign } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -23,9 +23,10 @@ import { useRouter } from "next/navigation"
 
 interface ProductTableProps {
   products: Product[]
+  onShowPrice?: (product: Product) => void
 }
 
-export function ProductTable({ products }: ProductTableProps) {
+export function ProductTable({ products, onShowPrice }: ProductTableProps) {
   const router = useRouter()
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [historyProduct, setHistoryProduct] = useState<Product | null>(null)
@@ -120,13 +121,18 @@ export function ProductTable({ products }: ProductTableProps) {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => setEditingProduct(product)} className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-md transition-colors">
+                      {onShowPrice && (
+                        <button onClick={() => onShowPrice(product)} className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors" title="Ver precios">
+                          <DollarSign size={18} />
+                        </button>
+                      )}
+                      <button onClick={() => setEditingProduct(product)} className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-md transition-colors" title="Editar">
                         <Pencil size={18} />
                       </button>
-                      <button onClick={() => setHistoryProduct(product)} className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-md transition-colors">
+                      <button onClick={() => setHistoryProduct(product)} className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-md transition-colors" title="Historial">
                         <Clock size={18} />
                       </button>
-                      <button onClick={() => setDeletingProduct(product)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors">
+                      <button onClick={() => setDeletingProduct(product)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Eliminar">
                         <Trash2 size={18} />
                       </button>
                     </div>

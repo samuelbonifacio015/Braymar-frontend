@@ -13,4 +13,6 @@ export interface Product {
   wholesalePrice: number
   category: string
   imageUrl?: string
+  weightPerUnit?: number  // kg por unidad individual
+  unitsPerBox?: number    // unidades por caja/paquete
 }

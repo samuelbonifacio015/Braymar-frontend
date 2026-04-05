@@ -7,6 +7,7 @@ import { ProductGrid } from "@/components/inventario/ProductGrid"
 import { ProductCardList } from "@/components/inventario/ProductCardList"
 import { ProductLocations } from "@/components/inventario/ProductLocations"
 import { MetricCards } from "@/components/inventario/MetricCards"
+import { PriceModal } from "@/components/inventario/PriceModal"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog"
@@ -46,6 +47,7 @@ export default function InventarioPage() {
   const [addPending, setAddPending] = useState(false)
 
   const [viewMode, setViewMode] = useState<ViewMode>("list")
+  const [priceProduct, setPriceProduct] = useState<Product | null>(null)
   const stats = useMemo(() => computeInventoryStats(products), [products])
 
   const categories = useMemo(() => [...new Set(products.map((p: Product) => p.category))], [products])
@@ -239,11 +241,11 @@ export default function InventarioPage() {
             Cargando productos...
           </div>
         ) : viewMode === "list" ? (
-          <ProductTable products={paginatedProducts} />
+          <ProductTable products={paginatedProducts} onShowPrice={setPriceProduct} />
         ) : viewMode === "grid" ? (
-          <ProductGrid products={paginatedProducts} />
+          <ProductGrid products={paginatedProducts} onShowPrice={setPriceProduct} />
         ) : viewMode === "column" ? (
-          <ProductCardList products={paginatedProducts} />
+          <ProductCardList products={paginatedProducts} onShowPrice={setPriceProduct} />
         ) : (
           <ProductLocations products={filteredProducts} />
         )}
@@ -257,6 +259,12 @@ export default function InventarioPage() {
             </div>
           </div>
         )}
+
+        <PriceModal
+          product={priceProduct}
+          open={!!priceProduct}
+          onOpenChange={(open) => !open && setPriceProduct(null)}
+        />
       </main>
     </div>
   )

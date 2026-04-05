@@ -1,11 +1,13 @@
 import { Product } from "@/types/inventory"
 import { StockBadge } from "./StockBadge"
+import { DollarSign } from "lucide-react"
 
 interface ProductGridProps {
   products: Product[]
+  onShowPrice?: (product: Product) => void
 }
 
-export function ProductGrid({ products }: ProductGridProps) {
+export function ProductGrid({ products, onShowPrice }: ProductGridProps) {
   if (products.length === 0) return <p className="py-12 text-center text-muted-foreground">No hay productos disponibles.</p>
 
   return (
@@ -31,6 +33,16 @@ export function ProductGrid({ products }: ProductGridProps) {
               <StockBadge status={product.stockStatus} stock={product.stock} />
               <span className="font-semibold text-sm text-foreground tabular-nums">S/ {product.unitPrice.toFixed(2)}</span>
             </div>
+
+            {onShowPrice && (
+              <button
+                onClick={() => onShowPrice(product)}
+                className="mt-2.5 w-full flex items-center justify-center gap-1.5 h-8 text-xs font-medium rounded-md bg-brand-50 text-brand-600 hover:bg-brand-100 transition-colors"
+              >
+                <DollarSign size={12} />
+                Ver precios
+              </button>
+            )}
 
             <div className="mt-3 pt-3 border-t border-border/40 flex items-center justify-between text-xs text-muted-foreground">
               <span>{product.location}</span>

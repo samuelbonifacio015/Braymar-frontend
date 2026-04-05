@@ -12,7 +12,9 @@ export const getProducts = (): Product[] => {
       unitPrice: 12.50,
       wholesalePrice: 11.00,
       category: "Cuadernos",
-      imageUrl: "/placeholder.png"
+      imageUrl: "/placeholder.png",
+      weightPerUnit: 0.25,
+      unitsPerBox: 10
     },
     {
       id: "prod-2",
@@ -24,7 +26,9 @@ export const getProducts = (): Product[] => {
       unitPrice: 45.00,
       wholesalePrice: 40.00,
       category: "Escritura",
-      imageUrl: "/placeholder.png"
+      imageUrl: "/placeholder.png",
+      weightPerUnit: 0.01,
+      unitsPerBox: 50
     },
     {
       id: "prod-3",
@@ -36,7 +40,9 @@ export const getProducts = (): Product[] => {
       unitPrice: 89.90,
       wholesalePrice: 75.00,
       category: "Mochilas",
-      imageUrl: "/placeholder.png"
+      imageUrl: "/placeholder.png",
+      weightPerUnit: 0.65,
+      unitsPerBox: 1
     },
     {
       id: "prod-4",
@@ -48,7 +54,9 @@ export const getProducts = (): Product[] => {
       unitPrice: 18.20,
       wholesalePrice: 15.00,
       category: "Útiles de Escritorio",
-      imageUrl: "/placeholder.png"
+      imageUrl: "/placeholder.png",
+      weightPerUnit: 0.02,
+      unitsPerBox: 20
     },
     {
       id: "prod-5",
@@ -60,7 +68,9 @@ export const getProducts = (): Product[] => {
       unitPrice: 5.50,
       wholesalePrice: 4.80,
       category: "Manualidades",
-      imageUrl: "/placeholder.png"
+      imageUrl: "/placeholder.png",
+      weightPerUnit: 0.12,
+      unitsPerBox: 12
     },
     {
       id: "prod-6",
@@ -72,7 +82,9 @@ export const getProducts = (): Product[] => {
       unitPrice: 10.00,
       wholesalePrice: 8.50,
       category: "Manualidades",
-      imageUrl: "/placeholder.png"
+      imageUrl: "/placeholder.png",
+      weightPerUnit: 0.03,
+      unitsPerBox: 10
     },
     {
       id: "prod-7",
@@ -84,7 +96,9 @@ export const getProducts = (): Product[] => {
       unitPrice: 15.00,
       wholesalePrice: 12.00,
       category: "Arte",
-      imageUrl: "/placeholder.png"
+      imageUrl: "/placeholder.png",
+      weightPerUnit: 0.18,
+      unitsPerBox: 5
     },
     {
       id: "prod-8",
@@ -96,7 +110,9 @@ export const getProducts = (): Product[] => {
       unitPrice: 35.00,
       wholesalePrice: 30.00,
       category: "Oficina",
-      imageUrl: "/placeholder.png"
+      imageUrl: "/placeholder.png",
+      weightPerUnit: 0.08,
+      unitsPerBox: 100
     }
   ]
 }

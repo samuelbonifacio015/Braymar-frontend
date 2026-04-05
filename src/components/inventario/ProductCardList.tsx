@@ -1,11 +1,13 @@
 import { Product } from "@/types/inventory"
 import { StockBadge } from "./StockBadge"
+import { DollarSign } from "lucide-react"
 
 interface ProductCardListProps {
   products: Product[]
+  onShowPrice?: (product: Product) => void
 }
 
-export function ProductCardList({ products }: ProductCardListProps) {
+export function ProductCardList({ products, onShowPrice }: ProductCardListProps) {
   if (products.length === 0) return <p className="py-12 text-center text-muted-foreground">No hay productos disponibles.</p>
 
   return (
@@ -28,12 +30,23 @@ export function ProductCardList({ products }: ProductCardListProps) {
               </p>
             </div>
 
-            <div className="flex items-center gap-6 shrink-0">
+            <div className="flex items-center gap-4 shrink-0">
               <StockBadge status={product.stockStatus} stock={product.stock} />
               <span className="text-sm text-muted-foreground min-w-[100px] hidden md:block">{product.location}</span>
-              <span className="font-semibold text-foreground tabular-nums min-w-[72px] text-right">
-                S/ {product.unitPrice.toFixed(2)}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-semibold text-foreground tabular-nums min-w-[72px] text-right">
+                  S/ {product.unitPrice.toFixed(2)}
+                </span>
+                {onShowPrice && (
+                  <button
+                    onClick={() => onShowPrice(product)}
+                    className="p-1.5 text-muted-foreground hover:text-green-600 hover:bg-green-50 rounded-md transition-colors shrink-0"
+                    title="Ver precios"
+                  >
+                    <DollarSign size={14} />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
