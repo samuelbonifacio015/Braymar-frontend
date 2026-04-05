@@ -22,13 +22,11 @@ function formatWeight(kg: number): string {
 
 export function PriceModal({ product, open, onOpenChange }: PriceModalProps) {
   const [quantity, setQuantity] = useState(1)
-  const [useWholesale, setUseWholesale] = useState(false)
 
   // Reset on product change
   const handleOpenChange = (open: boolean) => {
     if (open) {
       setQuantity(1)
-      setUseWholesale(false)
     }
     onOpenChange(open)
   }
@@ -41,8 +39,6 @@ export function PriceModal({ product, open, onOpenChange }: PriceModalProps) {
   const weightPerUnit = product.weightPerUnit ?? 0
 
   // Calculate
-  const selectedPrice = useWholesale ? wholesalePrice : unitPrice
-  const subtotal = selectedPrice * quantity
   const subtotalRetail = unitPrice * quantity
   const wholesaleSubtotal = wholesalePrice * quantity
   const savings = subtotalRetail - wholesaleSubtotal
@@ -53,12 +49,6 @@ export function PriceModal({ product, open, onOpenChange }: PriceModalProps) {
   const boxPrice = wholesalePrice * unitsPerBox
   const totalWeight = weightPerUnit * quantity
   const boxWeight = weightPerUnit * unitsPerBox
-
-  const priceRows = [
-    { label: `Precio minorista x${quantity}`, unit: unitPrice, total: unitPrice * quantity },
-    { label: `Precio mayorista x${quantity} (-${discountPct}%)`, unit: wholesalePrice, total: wholesalePrice * quantity, discount: true },
-    { label: `Por caja (${unitsPerBox} uds)`, unit: wholesalePrice, total: boxPrice, highlight: true },
-  ]
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -97,33 +87,15 @@ export function PriceModal({ product, open, onOpenChange }: PriceModalProps) {
               <p className="text-[10px] text-muted-foreground">caja: {formatWeight(boxWeight)}</p>
             </div>
           )}
-          {unitsPerBox > 1 && (
-            <div className="bg-muted/40 rounded-lg p-3 text-center">
-              <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-                <Package size={12} /> x Caja
-              </p>
-              <p className="text-lg font-bold tabular-nums">{unitsPerBox}</p>
-              <p className="text-[10px] text-muted-foreground">uds.</p>
-            </div>
-          )}
-          {(weightPerUnit === 0 || weightPerUnit === undefined) && (
-            <div className="bg-muted/40 rounded-lg p-3 text-center">
-              <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-                <Tag size={12} /> Desc.
-              </p>
-              <p className="text-lg font-bold text-green-700">-{discountPct}%</p>
-              <p className="text-[10px] text-muted-foreground">mayorista</p>
-            </div>
-          )}
-          {weightPerUnit > 0 && unitsPerBox === 1 && (
-            <div className="bg-muted/40 rounded-lg p-3 text-center">
-              <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-                <Tag size={12} /> Desc.
-              </p>
-              <p className="text-lg font-bold text-green-700">-{discountPct}%</p>
-              <p className="text-[10px] text-muted-foreground">mayorista</p>
-            </div>
-          )}
+          <div className="bg-muted/40 rounded-lg p-3 text-center">
+            <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+              {unitsPerBox > 1 ? <Package size={12} /> : <Tag size={12} />} {unitsPerBox > 1 ? "x Caja" : "Desc."}
+            </p>
+            <p className="text-lg font-bold tabular-nums">
+              {unitsPerBox > 1 ? unitsPerBox : `-${discountPct}%`}
+            </p>
+            <p className="text-[10px] text-muted-foreground">{unitsPerBox > 1 ? "uds." : "mayorista"}</p>
+          </div>
         </div>
 
         {/* Quantity Selector */}

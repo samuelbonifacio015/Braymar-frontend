@@ -16,3 +16,13 @@ export interface Product {
   weightPerUnit?: number  // kg por unidad individual
   unitsPerBox?: number    // unidades por caja/paquete
 }
+
+export interface Category {
+  id: string
+  name: string
+  slug: string
+  color: string
+  icon: string
+  description: string
+  createdAt: string
+}
