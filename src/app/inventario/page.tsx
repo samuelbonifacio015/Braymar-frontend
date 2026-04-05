@@ -110,12 +110,14 @@ export default function InventarioPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-brand-600 hover:bg-brand-700 text-white gap-2 h-10 px-4">
-                  <Plus size={18} />
-                  Añadir Producto
-                </Button>
-              </DialogTrigger>
+              <DialogTrigger
+                render={
+                  <Button className="bg-brand-600 hover:bg-brand-700 text-white gap-2 h-10 px-4">
+                    <Plus size={18} />
+                    Añadir Producto
+                  </Button>
+                }
+              />
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Añadir Nuevo Producto</DialogTitle>
