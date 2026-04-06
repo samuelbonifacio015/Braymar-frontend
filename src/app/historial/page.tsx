@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react"
 import { Topbar } from "@/components/layout/Topbar"
-import { MovementFilters } from "@/components/historial/MovementFilters"
+import { StatsCards } from "@/components/historial/StatsCards"
+import { MovementFiltersBar } from "@/components/historial/MovementFiltersBar"
 import { MovementTable } from "@/components/historial/MovementTable"
 import { mockMovements } from "@/data/mock-movements"
 import type { MovementType } from "@/types/movements"
@@ -38,8 +39,19 @@ export default function HistorialPage() {
         onSearchChange={(value) => setFilters((prev) => ({ ...prev, search: value }))}
       />
 
-      <main className="flex-1 p-6 space-y-6">
-        <MovementFilters filters={filters} onChange={setFilters} onReset={handleReset} />
+      <main className="flex-1 p-3 sm:p-6 space-y-5">
+        {/* Resumen estadistico del dia */}
+        <StatsCards movements={mockMovements} />
+
+        {/* Filtros compactos */}
+        <MovementFiltersBar
+          filters={filters}
+          onChange={setFilters}
+          onReset={handleReset}
+          resultCount={filteredMovements.length}
+        />
+
+        {/* Tabla de movimientos */}
         <MovementTable movements={filteredMovements} />
       </main>
     </div>
