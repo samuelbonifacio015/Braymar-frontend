@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Clock } from "lucide-react"
+import { Topbar } from "@/components/layout/Topbar"
 import { MovementFilters } from "@/components/historial/MovementFilters"
 import { MovementTable } from "@/components/historial/MovementTable"
 import { mockMovements } from "@/data/mock-movements"
@@ -31,21 +31,17 @@ export default function HistorialPage() {
   const handleReset = () => setFilters({ type: null, location: "", search: "" })
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      { /* Encabezado de pagina */}
-      <div className="flex items-center gap-3">
-        <Clock className="text-brand-600" size={24} />
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Historial de Movimientos</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Registro de todas las operaciones de inventario</p>
-        </div>
-      </div>
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      <Topbar
+        title="Historial de Movimientos"
+        searchQuery={filters.search}
+        onSearchChange={(value) => setFilters((prev) => ({ ...prev, search: value }))}
+      />
 
-      { /* Barra de filtros */}
-      <MovementFilters filters={filters} onChange={setFilters} onReset={handleReset} />
-
-      { /* Tabla de movimientos */}
-      <MovementTable movements={filteredMovements} />
+      <main className="flex-1 p-6 space-y-6">
+        <MovementFilters filters={filters} onChange={setFilters} onReset={handleReset} />
+        <MovementTable movements={filteredMovements} />
+      </main>
     </div>
   )
 }

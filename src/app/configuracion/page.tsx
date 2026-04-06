@@ -1,3 +1,4 @@
+import { Topbar } from "@/components/layout/Topbar"
 import { StoreSettingsCard } from "@/components/configuracion/StoreSettingsCard"
 import { ThresholdSettings } from "@/components/configuracion/ThresholdSettings"
 import { LocationsOverview } from "@/components/configuracion/LocationsOverview"
@@ -5,20 +6,15 @@ import { ProfileCard } from "@/components/configuracion/ProfileCard"
 
 export default function ConfiguracionPage() {
   return (
-    <div className="flex flex-col gap-5">
-      <header className="mb-1">
-        <h1 className="text-2xl font-semibold text-foreground tracking-tight">Configuracion</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Ajustes generales del sistema y de la tienda
-        </p>
-      </header>
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      <Topbar title="Configuracion" />
 
-      <div className="flex flex-col gap-4">
+      <main className="flex-1 p-6 space-y-6">
         <StoreSettingsCard />
         <ThresholdSettings />
         <LocationsOverview />
         <ProfileCard />
-      </div>
+      </main>
     </div>
   )
 }

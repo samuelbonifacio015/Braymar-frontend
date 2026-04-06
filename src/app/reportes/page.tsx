@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Topbar } from "@/components/layout/Topbar"
 import { getProducts } from "@/data/mock"
 import type { ReportPeriod, ReportType } from "@/types/reports"
 import { ReportFilters } from "@/components/reportes/ReportFilters"
@@ -52,41 +53,39 @@ export default function ReportesPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Page header */}
-      <div>
-        <h1 className="text-2xl font-bold">Reportes</h1>
-        <p className="text-muted-foreground">Analisis de inventario y ventas</p>
-      </div>
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      <Topbar title="Reportes" searchQuery="" onSearchChange={() => {}} />
 
-      {/* Filters */}
-      <ReportFilters
-        period={period}
-        onPeriodChange={setPeriod}
-        category={category}
-        onCategoryChange={setCategory}
-        categories={categories}
-      />
+      <main className="flex-1 p-6 space-y-6">
+        {/* Filters */}
+        <ReportFilters
+          period={period}
+          onPeriodChange={setPeriod}
+          category={category}
+          onCategoryChange={setCategory}
+          categories={categories}
+        />
 
-      {/* Report type tabs */}
-      <div className="flex gap-1 border-b">
-        {REPORT_TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === tab.key
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+        {/* Report type tabs */}
+        <div className="flex gap-1 border-b">
+          {REPORT_TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                activeTab === tab.key
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-      {/* Active report */}
-      {renderReport()}
+        {/* Active report */}
+        {renderReport()}
+      </main>
     </div>
   )
 }

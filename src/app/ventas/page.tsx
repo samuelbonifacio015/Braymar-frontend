@@ -2,11 +2,11 @@
 
 import { useState, useMemo } from "react"
 import { ShoppingCart, Clock } from "lucide-react"
+import { Topbar } from "@/components/layout/Topbar"
 import { ProductSearch } from "@/components/ventas/ProductSearch"
 import { CartItems } from "@/components/ventas/CartItems"
 import { PaymentSelector } from "@/components/ventas/PaymentSelector"
 import { SaleStats } from "@/components/ventas/SaleStats"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import type { Product, Location } from "@/types/inventory"
@@ -133,10 +133,11 @@ export default function VentasPage() {
   }, [completedSales])
 
   return (
-    <div className="max-w-[1440px] mx-auto space-y-6">
-      { /* Encabezado y tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">Ventas</h1>
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      <Topbar title="Ventas" searchQuery={searchTerm} onSearchChange={setSearchTerm} />
+
+      <main className="flex-1 p-6 space-y-6">
+        {/* Sub-toolbar: tabs */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => setView("pos")}
@@ -159,91 +160,91 @@ export default function VentasPage() {
             Historial
           </button>
         </div>
-      </div>
 
-      { /* Estadisticas de ventas del dia */}
-      {view === "pos" && <SaleStats sales={completedSales} />}
+        {/* Estadisticas de ventas del dia */}
+        {view === "pos" && <SaleStats sales={completedSales} />}
 
-      {/* Vista POS */}
-      {view === "pos" && (
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 h-[calc(100vh-240px)] min-h-[500px]">
-          { /* Columna izquierda: Busqueda de productos (3/5) */}
-          <div className="lg:col-span-3 overflow-y-auto pr-1">
-            <ProductSearch
-              products={products}
-              onAddToCart={addToCart}
-              searchTerm={searchTerm}
-              onSearchChange={setSearchTerm}
-            />
+        {/* Vista POS */}
+        {view === "pos" && (
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 h-[calc(100vh-240px)] min-h-[500px]">
+            { /* Columna izquierda: Busqueda de productos (3/5) */}
+            <div className="lg:col-span-3 overflow-y-auto pr-1">
+              <ProductSearch
+                products={products}
+                onAddToCart={addToCart}
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+              />
+            </div>
+
+            { /* Columna derecha: Carrito (2/5) */}
+            <div className="lg:col-span-2 rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col">
+              <CartItems
+                cartItems={cart}
+                onUpdateQuantity={updateQuantity}
+                onRemove={removeFromCart}
+                onClear={clearCart}
+                total={total}
+                onCheckout={() => setPaymentOpen(true)}
+              />
+            </div>
           </div>
+        )}
 
-          { /* Columna derecha: Carrito (2/5) */}
-          <div className="lg:col-span-2 rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col">
-            <CartItems
-              cartItems={cart}
-              onUpdateQuantity={updateQuantity}
-              onRemove={removeFromCart}
-              onClear={clearCart}
-              total={total}
-              onCheckout={() => setPaymentOpen(true)}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Vista Historial */}
-      {view === "history" && (
-        <div className="space-y-4">
-          {filteredSalesHistory.length > 0 && (
-            <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-50/50 border-b border-gray-200">
-                  <tr>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Fecha</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Productos</th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Total</th>
-                    <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Metodo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredSalesHistory.map((sale) => (
-                    <tr key={sale.id} className="border-b border-gray-100 hover:bg-gray-50/50">
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {new Date(sale.createdAt).toLocaleString("es-PE", {
-                          day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
-                        })}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {sale.items.map((i) => `${i.productName} x${i.quantity}`).join(", ")}
-                      </td>
-                      <td className="px-4 py-3 text-sm font-bold text-right text-gray-900">
-                        S/ {sale.total.toFixed(2)}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <Badge className={cn(
-                          "text-xs",
-                          sale.paymentMethod === "efectivo" && "bg-green-100 text-green-700",
-                          sale.paymentMethod === "yape_plin" && "bg-blue-100 text-blue-700",
-                          sale.paymentMethod === "tarjeta" && "bg-purple-100 text-purple-700",
-                        )}>
-                          {sale.paymentMethod === "efectivo" ? "Efectivo" : sale.paymentMethod === "yape_plin" ? "Yape/Plin" : "Tarjeta"}
-                        </Badge>
-                      </td>
+        {/* Vista Historial */}
+        {view === "history" && (
+          <div className="space-y-4">
+            {filteredSalesHistory.length > 0 && (
+              <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-50/50 border-b border-gray-200">
+                    <tr>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Fecha</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Productos</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Total</th>
+                      <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Metodo</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          {filteredSalesHistory.length === 0 && (
-            <div className="text-center py-16 text-gray-500 rounded-lg border border-dashed border-gray-300 bg-white">
-              <Clock size={32} className="mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No hay ventas registradas aun.</p>
-              <p className="text-xs mt-1">Vuelva al punto de venta para registrar una.</p>
-            </div>
-          )}
-        </div>
-      )}
+                  </thead>
+                  <tbody>
+                    {filteredSalesHistory.map((sale) => (
+                      <tr key={sale.id} className="border-b border-gray-100 hover:bg-gray-50/50">
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {new Date(sale.createdAt).toLocaleString("es-PE", {
+                            day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+                          })}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          {sale.items.map((i) => `${i.productName} x${i.quantity}`).join(", ")}
+                        </td>
+                        <td className="px-4 py-3 text-sm font-bold text-right text-gray-900">
+                          S/ {sale.total.toFixed(2)}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <Badge className={cn(
+                            "text-xs",
+                            sale.paymentMethod === "efectivo" && "bg-green-100 text-green-700",
+                            sale.paymentMethod === "yape_plin" && "bg-blue-100 text-blue-700",
+                            sale.paymentMethod === "tarjeta" && "bg-purple-100 text-purple-700",
+                          )}>
+                            {sale.paymentMethod === "efectivo" ? "Efectivo" : sale.paymentMethod === "yape_plin" ? "Yape/Plin" : "Tarjeta"}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {filteredSalesHistory.length === 0 && (
+              <div className="text-center py-16 text-gray-500 rounded-lg border border-dashed border-gray-300 bg-white">
+                <Clock size={32} className="mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No hay ventas registradas aun.</p>
+                <p className="text-xs mt-1">Vuelva al punto de venta para registrar una.</p>
+              </div>
+            )}
+          </div>
+        )}
+      </main>
 
       {/* Dialog de pago */}
       <PaymentSelector
