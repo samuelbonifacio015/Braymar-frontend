@@ -186,6 +186,7 @@ export default function VentasPage() {
                 onClear={clearCart}
                 total={total}
                 onCheckout={() => setPaymentOpen(true)}
+                isCheckingOut={false}
               />
             </div>
           </div>
