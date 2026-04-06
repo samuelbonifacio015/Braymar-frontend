@@ -1,5 +1,4 @@
 import { CheckCircle2, Package, Bell } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import type { AlertSeverity } from "@/types/alerts"
 
