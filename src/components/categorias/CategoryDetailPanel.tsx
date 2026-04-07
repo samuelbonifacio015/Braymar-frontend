@@ -1,6 +1,7 @@
 "use client"
 
-import { X, Package } from "lucide-react"
+import { X, Package, ArrowRight } from "lucide-react"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { getColorClasses, getCategoryIcon } from "@/lib/categories"
 import { StockBadge } from "@/components/inventario/StockBadge"
@@ -73,21 +74,23 @@ export function CategoryDetailPanel({ category, products, onClose }: CategoryDet
             </div>
           ) : (
             catProducts.map((product) => (
-              <div
+              <Link
                 key={product.id}
-                className="flex items-center gap-3 p-3 rounded-lg border bg-gray-50/50"
+                href="/inventario"
+                className="flex items-center gap-3 p-3 rounded-lg border bg-gray-50/50 hover:bg-brand-50/50 hover:border-brand-200 hover:shadow-sm transition-all duration-150 group cursor-pointer"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">{product.name}</p>
-                  <p className="text-xs text-muted-foreground">{product.sku} · {product.location}</p>
+                  <p className="text-sm font-medium truncate group-hover:text-brand-700 transition-colors">{product.name}</p>
+                  <p className="text-xs text-muted-foreground">{product.location}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <StockBadge status={product.stockStatus} stock={product.stock} />
                   <span className="text-sm font-medium tabular-nums whitespace-nowrap">
                     S/ {product.unitPrice.toFixed(2)}
                   </span>
+                  <ArrowRight size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
-              </div>
+              </Link>
             ))
           )}
         </div>
