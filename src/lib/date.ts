@@ -73,5 +73,5 @@ export function formatFullDateTime(isoDate: string): string {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  })
+  }).replace(/[\u202f\u00a0]/g, ' ')
 }
