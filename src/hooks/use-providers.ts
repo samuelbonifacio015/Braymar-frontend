@@ -13,7 +13,25 @@ export function useProviders() {
         console.error("Error fetching providers:", error)
         return
       }
-      setProviders(data as Provider[] || [])
+      const formatted = data?.map(p => ({
+        id: p.id,
+        ruc: p.ruc,
+        name: p.name,
+        contactPerson: p.contact_person,
+        phone: p.phone,
+        email: p.email,
+        address: p.address,
+        status: p.status,
+        reliability: p.reliability,
+        reliabilityScore: p.reliability_score,
+        onTimeRate: p.on_time_rate,
+        deliveryDays: p.delivery_days,
+        productIds: p.product_ids || [], // Default to empty array if null
+        notes: p.notes,
+        since: p.since,
+        avatarColor: p.avatar_color
+      })) as Provider[]
+      setProviders(formatted || [])
     } catch (err) {
       console.error("Failed to fetch providers:", err)
     }
