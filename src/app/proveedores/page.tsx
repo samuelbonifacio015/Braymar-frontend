@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Plus, Search } from "lucide-react"
 import { useProviders } from "@/hooks/use-providers"
 import { useProducts } from "@/hooks/use-products"
-import { addProvider, updateProvider, deleteProvider } from "@/data/mock-providers"
+import { supabase } from "@/lib/supabase/client"
 import type { Provider } from "@/types/providers"
 import type { Product } from "@/types/inventory"
 
@@ -47,10 +47,29 @@ export default function ProveedoresPage() {
 
   const handleSave = useCallback(
     async (data: Provider) => {
+      const providerData = {
+        id: data.id || `prov-${Date.now()}`,
+        ruc: data.ruc,
+        name: data.name,
+        contact_person: data.contactPerson,
+        phone: data.phone,
+        email: data.email,
+        address: data.address,
+        status: data.status,
+        reliability: data.reliability,
+        reliability_score: data.reliabilityScore,
+        on_time_rate: data.onTimeRate,
+        delivery_days: data.deliveryDays,
+        product_ids: data.productIds,
+        notes: data.notes,
+        since: data.since || new Date().toISOString(),
+        avatar_color: data.avatarColor
+      };
+
       if (editingProvider) {
-        updateProvider(editingProvider.id, data)
+        await supabase.from("providers").update(providerData).eq("id", editingProvider.id)
       } else {
-        addProvider(data)
+        await supabase.from("providers").insert(providerData)
       }
       setIsDialogOpen(false)
       setEditingProvider(null)

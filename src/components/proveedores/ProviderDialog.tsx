@@ -15,7 +15,8 @@ interface ProviderDialogProps {
   onSave: (data: Provider) => void
 }
 
-const EMPTY_PROVIDER = {
+const EMPTY_PROVIDER: Provider = {
+  id: "",
   ruc: "",
   name: "",
   contactPerson: "",
@@ -27,7 +28,7 @@ const EMPTY_PROVIDER = {
   reliabilityScore: 3,
   onTimeRate: 80,
   deliveryDays: 5,
-  productIds: [],
+  productIds: [] as string[],
   notes: "",
   since: new Date().toISOString(),
   avatarColor: AVATAR_COLORS[0],

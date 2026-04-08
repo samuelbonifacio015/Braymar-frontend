@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react"
 import { MapPin, PackageSearch, Pencil, X, Save, Warehouse } from "lucide-react"
 
-import { getProducts } from "@/data/mock"
-import { type Location } from "@/types/inventory"
+
+import { type Location, type Product } from "@/types/inventory"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -25,17 +25,16 @@ interface LocationStat {
   lowStockCount: number
 }
 
-function computeLocationStats(): LocationStat[] {
-  const products = getProducts()
+function computeLocationStats(products: Product[]): LocationStat[] {
   const locations: Location[] = ["Almacén Tienda", "Cochera", "Cangallo", "Santa Anita"]
 
   return locations.map((loc) => {
-    const locProducts = products.filter((p) => p.location === loc)
+    const locProducts = products.filter((p: Product) => p.location === loc)
     return {
       name: loc,
       productCount: locProducts.length,
-      totalStock: locProducts.reduce((sum, p) => sum + p.stock, 0),
-      lowStockCount: locProducts.filter((p) => p.stockStatus !== "optimo").length,
+      totalStock: locProducts.reduce((sum: number, p: Product) => sum + p.stock, 0),
+      lowStockCount: locProducts.filter((p: Product) => p.stockStatus !== "optimo").length,
     }
   })
 }
@@ -68,8 +67,11 @@ const locationColors: Record<Location, { bg: string; icon: string; border: strin
   "Santa Anita": { bg: "bg-amber-50", icon: "text-amber-600", border: "border-amber-100" },
 }
 
+import { useProducts } from "@/hooks/use-products"
+
 export function LocationsOverview() {
-  const stats = computeLocationStats()
+  const { products, loading } = useProducts()
+  const stats = computeLocationStats(products)
   const [selectedLocation, setSelectedLocation] = useState<LocationStat | null>(null)
   const [editingAlias, setEditingAlias] = useState(false)
   const [aliasValue, setAliasValue] = useState("")

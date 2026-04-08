@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { ShoppingCart, Clock } from "lucide-react"
 import { Topbar } from "@/components/layout/Topbar"
 import { ProductSearch } from "@/components/ventas/ProductSearch"
@@ -12,7 +12,6 @@ import { cn } from "@/lib/utils"
 import type { Product, Location } from "@/types/inventory"
 import type { CartItem as CartItemType, PaymentMethod, Sale } from "@/types/sales"
 
-import { mockMovements } from "@/data/mock-movements"
 
 // Fallback location typed as Location
 const DEFAULT_LOCATION: Location = "Almacén Tienda"
@@ -27,31 +26,17 @@ export default function VentasPage() {
   const [paymentOpen, setPaymentOpen] = useState(false)
   const [completedSales, setCompletedSales] = useState<Sale[]>([])
 
-  // Obtener productos desde los movimientos mock (usamos datos de referencia)
-  // En produccion se usaria useProducts().Aqui creamos productos base para el POS.
-  const products: Product[] = useMemo(
-    () =>
-      Array.from(
-        new Map(
-          mockMovements.map((m) => [
-            m.productId,
-            {
-              id: m.productId,
-              sku: m.sku,
-              name: m.productName,
-              stock: 100,
-              stockStatus: "optimo" as const,
-              location: m.toLocation ?? m.fromLocation ?? DEFAULT_LOCATION,
-              unitPrice: parseFloat((Math.random() * 20 + 5).toFixed(2)),
-              wholesalePrice: parseFloat((Math.random() * 15 + 3).toFixed(2)),
-              category: "General",
-              categoryId: "",
-            },
-          ]),
-        ).values(),
-      ),
-    [],
-  )
+  const [products, setProducts] = useState<Product[]>([])
+
+  useEffect(() => {
+    import("@/actions/inventory").then((mod) => {
+      mod.getProducts().then((p) => {
+        // En punto de venta, a veces se requiere asegurar que haya stock, pero traemos todos
+        setProducts(p)
+      })
+    })
+  }, [])
+
 
   // Agregar producto al carrito
   const addToCart = (product: Product) => {

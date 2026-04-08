@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useProducts } from "@/hooks/use-products"
-import { getTransfers, addTransfer, updateTransferStatus } from "@/data/mock-transfers"
+import { supabase } from "@/lib/supabase/client"
 import type { Transfer } from "@/types/transfers"
 import { Topbar } from "@/components/layout/Topbar"
 import { TransferStats } from "@/components/transferencias/TransferStats"
@@ -13,10 +13,33 @@ import { Plus } from "lucide-react"
 
 export default function TransferenciasPage() {
   const { products, loading: productsLoading } = useProducts()
-  const [transfers, setTransfers] = useState<Transfer[]>(() => getTransfers())
+  const [transfers, setTransfers] = useState<Transfer[]>([])
   const [isFormOpen, setIsFormOpen] = useState(false)
 
-  const handleCreateTransfer = (data: {
+  const fetchTransfers = async () => {
+    const { data } = await supabase.from('transfers').select('*').order('created_at', { ascending: false })
+    if (data) {
+      setTransfers(data.map(t => ({
+        id: t.id,
+        productId: t.product_id,
+        productName: t.product_name,
+        sku: t.sku,
+        origin: t.origin,
+        destination: t.destination,
+        quantity: t.quantity,
+        requestedBy: t.requested_by,
+        notes: t.notes,
+        status: t.status,
+        createdAt: t.created_at
+      } as Transfer)))
+    }
+  }
+
+  useEffect(() => {
+    fetchTransfers()
+  }, [])
+
+  const handleCreateTransfer = async (data: {
     productId: string
     origin: Exclude<Transfer["origin"], undefined>
     destination: Exclude<Transfer["destination"], undefined>
@@ -26,25 +49,25 @@ export default function TransferenciasPage() {
     const product = products.find((p) => p.id === data.productId)
     if (!product) return
 
-    const newTransfer = addTransfer({
-      productId: data.productId,
-      productName: product.name,
+    await supabase.from('transfers').insert({
+      id: `tf-${Date.now()}`,
+      product_id: data.productId,
+      product_name: product.name,
       sku: product.sku,
       origin: data.origin,
       destination: data.destination,
       quantity: data.quantity,
-      requestedBy: "almacenero",
+      requested_by: "almacenero",
       notes: data.notes,
-      status: "pending",
-      createdAt: new Date().toISOString(),
+      status: "pending"
     })
 
-    setTransfers(getTransfers())
+    fetchTransfers()
   }
 
-  const handleCompleteTransfer = (id: string) => {
-    updateTransferStatus(id, "completed")
-    setTransfers(getTransfers())
+  const handleCompleteTransfer = async (id: string) => {
+    await supabase.from('transfers').update({ status: 'completed' }).eq('id', id)
+    fetchTransfers()
   }
 
   return (

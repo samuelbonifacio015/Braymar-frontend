@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useMemo, useState, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { formatFullDateTime } from "@/lib/date"
-import { getMovements } from "@/data/mock-movements"
+
 import type { StockMovement, MovementType } from "@/types/movements"
 import {
   ArrowDownLeft,
@@ -43,19 +43,33 @@ interface ProductTimelineModalProps {
 }
 
 export function ProductTimelineModal({ productId, productName, productSku, open, onOpenChange }: ProductTimelineModalProps) {
-  // Fetch movements for this specific product, sorted newest first
-  const productMovements = useMemo(() => {
-    if (!productId) return []
-    return getMovements()
-      .filter((m) => m.productId === productId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-  }, [productId])
+  const [productMovements, setProductMovements] = useState<StockMovement[]>([])
+
+  useEffect(() => {
+    if (!productId || !open) return
+    import("@/lib/supabase/client").then(({ supabase }) => {
+      supabase.from("movements").select("*").eq("product_id", productId).order("created_at", { ascending: false }).then(({ data }) => {
+        if (data) {
+          const formatted = data.map(m => ({
+            ...m,
+            productId: m.product_id,
+            productName: m.product_name,
+            fromLocation: m.from_location,
+            toLocation: m.to_location,
+            performedBy: m.performed_by,
+            createdAt: m.created_at
+          })) as StockMovement[]
+          setProductMovements(formatted)
+        }
+      })
+    })
+  }, [productId, open])
 
   if (!productId) return null
 
   // Calculate current stock from movements (simulated calculation)
   const currentStock = useMemo(() => {
-    return productMovements.reduce((sum, m) => sum + m.quantity, 0)
+    return productMovements.reduce((sum: number, m: StockMovement) => sum + m.quantity, 0)
   }, [productMovements])
 
   return (
@@ -89,8 +103,8 @@ export function ProductTimelineModal({ productId, productName, productSku, open,
             {productMovements.length === 0 ? (
               <div className="pl-6 text-sm text-gray-500 py-4 italic">No hay historial para este producto.</div>
             ) : (
-              productMovements.map((movement, idx) => {
-                const config = MOVEMENT_CONFIG[movement.type]
+              productMovements.map((movement: StockMovement, idx: number) => {
+                const config = MOVEMENT_CONFIG[movement.type as MovementType]
                 const Icon = config.icon
                 const isLast = idx === productMovements.length - 1
 

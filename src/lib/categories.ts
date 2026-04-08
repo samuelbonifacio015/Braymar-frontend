@@ -17,7 +17,7 @@ export function getColorClasses(color: string) {
 }
 
 export function getCategoryIcon(name: string): LucideIcon | null {
-  return (icons as Record<string, LucideIcon | undefined>)[name] ?? null
+  return (icons as any)[name] ?? null
 }
 
 export interface CategoryStats {

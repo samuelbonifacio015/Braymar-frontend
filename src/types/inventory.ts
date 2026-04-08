@@ -11,6 +11,7 @@ export interface Product {
   location: Location
   unitPrice: number
   wholesalePrice: number
+  cost?: number // Costo de adquisición base
   categoryId: string
   category: string  // denormalized — nombre derivado del join con categories
   imageUrl?: string

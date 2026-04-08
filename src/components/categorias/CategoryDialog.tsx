@@ -97,7 +97,7 @@ export function CategoryDialog({ open, onOpenChange, category, onSave }: Categor
             <label className="text-sm font-medium">Icono</label>
             <div className="flex items-center gap-1.5 flex-wrap max-h-32 overflow-y-auto">
               {ICON_OPTIONS.map((iconName) => {
-                const Icon = (icons as Record<string, LucideIcon | undefined>)[iconName] ?? null
+                const Icon = (icons as any)[iconName] ?? null
                 if (!Icon) return null
                 const colors = getColorClasses(selectedColor)
                 return (

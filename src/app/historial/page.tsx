@@ -7,7 +7,7 @@ import { MovementFiltersBar } from "@/components/historial/MovementFiltersBar"
 import { MovementTable } from "@/components/historial/MovementTable"
 import { MovementDetailModal } from "@/components/historial/MovementDetailModal"
 import { ProductTimelineModal } from "@/components/historial/ProductTimelineModal"
-import { mockMovements } from "@/data/mock-movements"
+import { useEffect } from "react"
 import type { MovementType, StockMovement } from "@/types/movements"
 import type { Location } from "@/types/inventory"
 
@@ -25,9 +25,30 @@ export default function HistorialPage() {
     sku: string
   } | null>(null)
 
+  const [movementsList, setMovementsList] = useState<StockMovement[]>([])
+
+  useEffect(() => {
+    import("@/lib/supabase/client").then(({ supabase }) => {
+      supabase.from("movements").select("*").order("created_at", { ascending: false }).then(({ data }) => {
+        if (data) {
+          const formatted = data.map(m => ({
+            ...m,
+            productId: m.product_id,
+            productName: m.product_name,
+            fromLocation: m.from_location,
+            toLocation: m.to_location,
+            performedBy: m.performed_by,
+            createdAt: m.created_at
+          })) as StockMovement[]
+          setMovementsList(formatted)
+        }
+      })
+    })
+  }, [])
+
   // Filtrar movimientos segun los criterios actuales
   const filteredMovements = useMemo(() => {
-    return mockMovements.filter((m) => {
+    return movementsList.filter((m) => {
       if (filters.type && m.type !== filters.type) return false
       if (filters.location && m.fromLocation !== filters.location && m.toLocation !== filters.location) return false
       if (filters.search) {
@@ -36,7 +57,7 @@ export default function HistorialPage() {
       }
       return true
     })
-  }, [filters])
+  }, [filters, movementsList])
 
   const handleReset = () => setFilters({ type: null, location: "", search: "" })
 
@@ -50,7 +71,7 @@ export default function HistorialPage() {
 
       <main className="flex-1 p-3 sm:p-6 space-y-5">
         {/* Resumen estadistico del dia */}
-        <StatsCards movements={mockMovements} />
+        <StatsCards movements={movementsList} />
 
         {/* Filtros compactos */}
         <MovementFiltersBar

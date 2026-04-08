@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { useProducts } from "@/hooks/use-products"
-import { getProviders } from "@/data/mock-providers"
+import { useProviders } from "@/hooks/use-providers"
 import { generateAlerts } from "@/lib/alerts"
 import type { AlertSeverity } from "@/types/alerts"
 import { Topbar } from "@/components/layout/Topbar"
@@ -12,8 +12,9 @@ import { AlertCard } from "@/components/alertas/AlertCard"
 import { AlertEmptyState } from "@/components/alertas/AlertEmptyState"
 
 export default function AlertasPage() {
-  const { products, loading } = useProducts()
-  const providers = useMemo(() => getProviders(), [])
+  const { products, loading: productsLoading } = useProducts()
+  const { providers, loading: providersLoading } = useProviders()
+  const loading = productsLoading || providersLoading
   const [activeTab, setActiveTab] = useState<AlertSeverity | "todas">("todas")
 
   // Generar alertas basadas en el estado actual de productos y proveedores
