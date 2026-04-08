@@ -5,8 +5,10 @@ import { Topbar } from "@/components/layout/Topbar"
 import { StatsCards } from "@/components/historial/StatsCards"
 import { MovementFiltersBar } from "@/components/historial/MovementFiltersBar"
 import { MovementTable } from "@/components/historial/MovementTable"
+import { MovementDetailModal } from "@/components/historial/MovementDetailModal"
+import { ProductTimelineModal } from "@/components/historial/ProductTimelineModal"
 import { mockMovements } from "@/data/mock-movements"
-import type { MovementType } from "@/types/movements"
+import type { MovementType, StockMovement } from "@/types/movements"
 import type { Location } from "@/types/inventory"
 
 export default function HistorialPage() {
@@ -15,6 +17,13 @@ export default function HistorialPage() {
     location: Location | ""
     search: string
   }>({ type: null, location: "", search: "" })
+
+  const [selectedMovement, setSelectedMovement] = useState<StockMovement | null>(null)
+  const [selectedProduct, setSelectedProduct] = useState<{
+    id: string
+    name: string
+    sku: string
+  } | null>(null)
 
   // Filtrar movimientos segun los criterios actuales
   const filteredMovements = useMemo(() => {
@@ -52,8 +61,28 @@ export default function HistorialPage() {
         />
 
         {/* Tabla de movimientos */}
-        <MovementTable movements={filteredMovements} />
+        <MovementTable 
+          movements={filteredMovements} 
+          onMovementClick={(mov) => setSelectedMovement(mov)}
+          onProductClick={(id, name, sku) => setSelectedProduct({ id, name, sku })}
+        />
       </main>
+
+      {/* Modales */}
+      <MovementDetailModal
+        movement={selectedMovement}
+        open={selectedMovement !== null}
+        onOpenChange={(open) => !open && setSelectedMovement(null)}
+      />
+
+      <ProductTimelineModal
+        productId={selectedProduct?.id || null}
+        productName={selectedProduct?.name || null}
+        productSku={selectedProduct?.sku || null}
+        open={selectedProduct !== null}
+        onOpenChange={(open) => !open && setSelectedProduct(null)}
+      />
     </div>
   )
 }
+

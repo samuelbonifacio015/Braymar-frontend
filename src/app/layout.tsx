@@ -9,7 +9,7 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Braymar - Inventory Management",
+  title: "Braymar",
   description: "Sistema de gestión de inventario Braymar",
 };
 

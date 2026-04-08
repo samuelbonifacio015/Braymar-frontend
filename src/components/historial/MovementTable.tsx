@@ -67,9 +67,11 @@ const MOVEMENT_CONFIG: Record<MovementType, {
 
 interface MovementTableProps {
   movements: StockMovement[]
+  onMovementClick: (movement: StockMovement) => void
+  onProductClick: (productId: string, productName: string, sku: string) => void
 }
 
-export function MovementTable({ movements }: MovementTableProps) {
+export function MovementTable({ movements, onMovementClick, onProductClick }: MovementTableProps) {
   const [page, setPage] = useState(1)
 
   const totalPages = Math.max(1, Math.ceil(movements.length / PAGE_SIZE))
@@ -110,7 +112,11 @@ export function MovementTable({ movements }: MovementTableProps) {
                 const config = MOVEMENT_CONFIG[m.type]
                 const Icon = config.icon
                 return (
-                  <TableRow key={m.id} className="hover:bg-gray-50/60 transition-colors duration-150">
+                  <TableRow
+                    key={m.id}
+                    onClick={() => onMovementClick(m)}
+                    className="hover:bg-gray-50/60 transition-colors duration-150 cursor-pointer"
+                  >
                     <TableCell className="py-3 pr-4">
                       <div>
                         <p className="text-sm font-medium text-gray-800 tabular-nums whitespace-nowrap">
@@ -122,7 +128,15 @@ export function MovementTable({ movements }: MovementTableProps) {
                       </div>
                     </TableCell>
                     <TableCell className="py-3">
-                      <p className="text-sm font-medium text-gray-900">{m.productName}</p>
+                      <p
+                        className="text-sm font-medium text-gray-900 hover:text-brand-600 hover:underline hover:decoration-brand-600/30 underline-offset-4 cursor-pointer w-fit"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onProductClick(m.productId, m.productName, m.sku)
+                        }}
+                      >
+                        {m.productName}
+                      </p>
                     </TableCell>
                     <TableCell className="py-3 text-sm text-gray-400 tabular-nums">{m.sku}</TableCell>
                     <TableCell className="py-3">
@@ -142,7 +156,7 @@ export function MovementTable({ movements }: MovementTableProps) {
                     <TableCell className="py-3">
                       <LocationBadges fromLocation={m.fromLocation} toLocation={m.toLocation} />
                     </TableCell>
-                    <TableCell className="py-3 text-sm text-gray-400 max-w-[140px] truncate">
+                    <TableCell className="py-3 text-sm text-gray-400 max-w-[140px] truncate" title={m.notes}>
                       {m.notes ?? "—"}
                     </TableCell>
                     <TableCell className="py-3 text-sm text-gray-500 whitespace-nowrap">{m.performedBy}</TableCell>
@@ -169,7 +183,8 @@ export function MovementTable({ movements }: MovementTableProps) {
             return (
               <div
                 key={m.id}
-                className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all duration-200"
+                onClick={() => onMovementClick(m)}
+                className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all duration-200 cursor-pointer active:scale-[0.98]"
               >
                 {/* Header: time + type */}
                 <div className="flex items-center justify-between mb-2.5">
@@ -185,11 +200,19 @@ export function MovementTable({ movements }: MovementTableProps) {
                 {/* Product + quantity */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{m.productName}</p>
+                    <p
+                      className="text-sm font-medium text-gray-900 truncate hover:text-brand-600 hover:underline hover:decoration-brand-600/30 underline-offset-4 cursor-pointer w-fit"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onProductClick(m.productId, m.productName, m.sku)
+                      }}
+                    >
+                      {m.productName}
+                    </p>
                     <p className="text-[11px] text-gray-400 tabular-nums">{m.sku} &middot; {formatFullDateTime(m.createdAt)}</p>
                   </div>
                   <span className={cn(
-                    "text-lg font-bold tabular-nums shrink-0",
+                    "text-lg font-bold tabular-nums shrink-0 mt-0.5",
                     m.quantity > 0 ? "text-green-600" : "text-red-600"
                   )}>
                     {m.quantity > 0 ? "+" : ""}{m.quantity}
