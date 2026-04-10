@@ -3,35 +3,38 @@ import type { Sale } from "@/types/sales"
 
 interface SaleStatsProps {
   sales: Sale[]
+  totalRevenue?: number
+  transactionCount?: number
+  averageTicket?: number
 }
 
-export function SaleStats({ sales }: SaleStatsProps) {
-  // Calcular estadisticas del dia actual
+export function SaleStats({ sales, totalRevenue, transactionCount, averageTicket }: SaleStatsProps) {
+  // Use provided stats from database if available, otherwise calculate from sales prop
   const today = new Date().toISOString().slice(0, 10)
   const todaySales = sales.filter((s) => s.createdAt.slice(0, 10) === today)
 
-  const todayRevenue = todaySales.reduce((sum, s) => sum + s.total, 0)
-  const transactionCount = todaySales.length
-  const avgTicket = transactionCount > 0 ? todayRevenue / transactionCount : 0
+  const displayRevenue = totalRevenue ?? todaySales.reduce((sum, s) => sum + s.total, 0)
+  const displayTransactions = transactionCount ?? todaySales.length
+  const displayAvgTicket = averageTicket ?? (displayTransactions > 0 ? displayRevenue / displayTransactions : 0)
 
   const stats = [
     {
       label: "Ventas del Dia",
-      value: `S/ ${todayRevenue.toFixed(2)}`,
+      value: `S/ ${displayRevenue.toFixed(2)}`,
       icon: TrendingUp,
       color: "text-green-600",
       bgColor: "bg-green-50",
     },
     {
       label: "Transacciones",
-      value: String(transactionCount),
+      value: String(displayTransactions),
       icon: ShoppingCart,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
     },
     {
       label: "Ticket Promedio",
-      value: `S/ ${avgTicket.toFixed(2)}`,
+      value: `S/ ${displayAvgTicket.toFixed(2)}`,
       icon: Wallet,
       color: "text-purple-600",
       bgColor: "bg-purple-50",

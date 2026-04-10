@@ -10,7 +10,9 @@ import { SaleStats } from "@/components/ventas/SaleStats"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import type { Product, Location } from "@/types/inventory"
-import type { CartItem as CartItemType, PaymentMethod, Sale } from "@/types/sales"
+import type { CartItem as CartItemType, PaymentMethod, Sale, SaleItem } from "@/types/sales"
+import { getProducts } from "@/actions/inventory"
+import { createSale, getSales, getSaleItems, getTodaySalesStats } from "@/actions/sales"
 
 
 // Fallback location typed as Location
@@ -24,18 +26,54 @@ export default function VentasPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [cart, setCart] = useState<CartItemType[]>([])
   const [paymentOpen, setPaymentOpen] = useState(false)
+  const [isCheckingOut, setIsCheckingOut] = useState(false)
+  
+  // State for sales from database
   const [completedSales, setCompletedSales] = useState<Sale[]>([])
+  const [salesWithItems, setSalesWithItems] = useState<Map<string, SaleItem[]>>(new Map())
+  const [loading, setLoading] = useState(false)
+  
+  // Stats state
+  const [todayStats, setTodayStats] = useState({
+    totalRevenue: 0,
+    transactionCount: 0,
+    averageTicket: 0,
+  })
 
   const [products, setProducts] = useState<Product[]>([])
 
+  // Fetch products on mount
   useEffect(() => {
-    import("@/actions/inventory").then((mod) => {
-      mod.getProducts().then((p) => {
-        // En punto de venta, a veces se requiere asegurar que haya stock, pero traemos todos
-        setProducts(p)
-      })
+    getProducts().then((p) => {
+      setProducts(p)
     })
   }, [])
+
+  // Fetch sales history when switching to history view
+  useEffect(() => {
+    if (view === "history") {
+      setLoading(true)
+      getSales().then(async (sales) => {
+        setCompletedSales(sales)
+        
+        // Fetch items for each sale
+        const itemsMap = new Map<string, SaleItem[]>()
+        for (const sale of sales.slice(0, 20)) { // Limit to recent 20 sales for performance
+          const items = await getSaleItems(sale.id)
+          itemsMap.set(sale.id, items)
+        }
+        setSalesWithItems(itemsMap)
+        setLoading(false)
+      })
+    }
+  }, [view])
+
+  // Fetch today's stats when in POS view
+  useEffect(() => {
+    if (view === "pos") {
+      getTodaySalesStats().then(setTodayStats)
+    }
+  }, [view])
 
 
   // Agregar producto al carrito
@@ -90,26 +128,57 @@ export default function VentasPage() {
     [cart],
   )
 
-  // Confirmar pago
-  const handlePaymentConfirm = (method: PaymentMethod) => {
-    const sale: Sale = {
-      id: `sale-${Date.now()}`,
-      items: cart.map((item) => ({
-        productId: item.productId,
-        productName: item.productName,
-        sku: item.sku,
-        quantity: item.quantity,
-        unitPrice: item.quantity >= 10 ? item.wholesalePrice : item.unitPrice,
-        total: (item.quantity >= 10 ? item.wholesalePrice : item.unitPrice) * item.quantity,
-      })),
+  // Confirmar pago y guardar en base de datos
+  const handlePaymentConfirm = async (method: PaymentMethod) => {
+    setIsCheckingOut(true)
+    
+    const saleItems: SaleItem[] = cart.map((item) => ({
+      productId: item.productId,
+      productName: item.productName,
+      sku: item.sku,
+      quantity: item.quantity,
+      unitPrice: item.quantity >= 10 ? item.wholesalePrice : item.unitPrice,
+      total: (item.quantity >= 10 ? item.wholesalePrice : item.unitPrice) * item.quantity,
+    }))
+
+    const result = await createSale({
+      items: saleItems,
       total,
       paymentMethod: method,
       saleBy: "vendedor",
-      createdAt: new Date().toISOString(),
+    })
+
+    if (result.success) {
+      // Create local sale object for immediate UI update
+      const sale: Sale = {
+        id: result.saleId!,
+        total,
+        itemCount: cart.length,
+        paymentMethod: method,
+        saleBy: "vendedor",
+        createdAt: new Date().toISOString(),
+      }
+      
+      // Add to local state for immediate feedback
+      setCompletedSales((prev) => [sale, ...prev])
+      setSalesWithItems((prev) => new Map(prev).set(sale.id, saleItems))
+      
+      // Clear cart and close payment dialog
+      setCart([])
+      setPaymentOpen(false)
+      
+      // Refresh stats
+      getTodaySalesStats().then(setTodayStats)
+      
+      // Refresh products to get updated stock
+      getProducts().then((p) => setProducts(p))
+    } else {
+      // TODO: Show error toast to user
+      console.error("Error creating sale:", result.error)
+      alert(`Error al crear la venta: ${result.error}`)
     }
-    setCompletedSales((prev) => [sale, ...prev])
-    setCart([])
-    setPaymentOpen(false)
+    
+    setIsCheckingOut(false)
   }
 
   // Filtrar ventas del historial
@@ -147,7 +216,14 @@ export default function VentasPage() {
         </div>
 
         {/* Estadisticas de ventas del dia */}
-        {view === "pos" && <SaleStats sales={completedSales} />}
+        {view === "pos" && (
+          <SaleStats 
+            sales={completedSales} 
+            totalRevenue={todayStats.totalRevenue}
+            transactionCount={todayStats.transactionCount}
+            averageTicket={todayStats.averageTicket}
+          />
+        )}
 
         {/* Vista POS */}
         {view === "pos" && (
@@ -180,48 +256,61 @@ export default function VentasPage() {
         {/* Vista Historial */}
         {view === "history" && (
           <div className="space-y-4">
-            {filteredSalesHistory.length > 0 && (
+            {loading ? (
+              <div className="text-center py-16 text-gray-500">
+                <p>Cargando ventas...</p>
+              </div>
+            ) : filteredSalesHistory.length > 0 ? (
               <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
                 <table className="w-full">
                   <thead className="bg-gray-50/50 border-b border-gray-200">
                     <tr>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Fecha</th>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Productos</th>
+                      <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Items</th>
                       <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Total</th>
                       <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Metodo</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredSalesHistory.map((sale) => (
-                      <tr key={sale.id} className="border-b border-gray-100 hover:bg-gray-50/50">
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {new Date(sale.createdAt).toLocaleString("es-PE", {
-                            day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
-                          })}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          {sale.items.map((i) => `${i.productName} x${i.quantity}`).join(", ")}
-                        </td>
-                        <td className="px-4 py-3 text-sm font-bold text-right text-gray-900">
-                          S/ {sale.total.toFixed(2)}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <Badge className={cn(
-                            "text-xs",
-                            sale.paymentMethod === "efectivo" && "bg-green-100 text-green-700",
-                            sale.paymentMethod === "yape_plin" && "bg-blue-100 text-blue-700",
-                            sale.paymentMethod === "tarjeta" && "bg-purple-100 text-purple-700",
-                          )}>
-                            {sale.paymentMethod === "efectivo" ? "Efectivo" : sale.paymentMethod === "yape_plin" ? "Yape/Plin" : "Tarjeta"}
-                          </Badge>
-                        </td>
-                      </tr>
-                    ))}
+                    {filteredSalesHistory.map((sale) => {
+                      const items = salesWithItems.get(sale.id) ?? []
+                      return (
+                        <tr key={sale.id} className="border-b border-gray-100 hover:bg-gray-50/50">
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {new Date(sale.createdAt).toLocaleString("es-PE", {
+                              day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+                            })}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {items.length > 0 
+                              ? items.map((i) => `${i.productName} x${i.quantity}`).join(", ")
+                              : `${sale.itemCount ?? 0} items`
+                            }
+                          </td>
+                          <td className="px-4 py-3 text-sm text-center text-gray-600">
+                            {sale.itemCount ?? items.length}
+                          </td>
+                          <td className="px-4 py-3 text-sm font-bold text-right text-gray-900">
+                            S/ {sale.total.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <Badge className={cn(
+                              "text-xs",
+                              sale.paymentMethod === "efectivo" && "bg-green-100 text-green-700",
+                              sale.paymentMethod === "yape_plin" && "bg-blue-100 text-blue-700",
+                              sale.paymentMethod === "tarjeta" && "bg-purple-100 text-purple-700",
+                            )}>
+                              {sale.paymentMethod === "efectivo" ? "Efectivo" : sale.paymentMethod === "yape_plin" ? "Yape/Plin" : "Tarjeta"}
+                            </Badge>
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
-            )}
-            {filteredSalesHistory.length === 0 && (
+            ) : (
               <div className="text-center py-16 text-gray-500 rounded-lg border border-dashed border-gray-300 bg-white">
                 <Clock size={32} className="mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No hay ventas registradas aun.</p>

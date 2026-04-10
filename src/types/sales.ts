@@ -23,8 +23,9 @@ export interface SaleItem {
 
 export interface Sale {
   id: string
-  items: SaleItem[]
+  items?: SaleItem[] // Optional for database queries (items fetched separately)
   total: number
+  itemCount?: number // Database field: item_count
   paymentMethod: PaymentMethod
   saleBy: string
   createdAt: string
