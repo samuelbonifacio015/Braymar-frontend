@@ -8,6 +8,9 @@ export interface Alert {
   message: string
   productIds?: string[]
   providerIds?: string[]
+  productId?: string // Database field
+  providerId?: string // Database field
+  resolved?: boolean // Database field
+  resolvedAt?: string // Database field
   createdAt: string
-  resolvedAt?: string
 }

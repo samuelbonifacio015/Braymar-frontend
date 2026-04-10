@@ -53,16 +53,16 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white/95 backdrop-blur-md border border-gray-100 p-3 rounded-xl shadow-xl outline-none">
-        <p className="font-bold text-sm text-gray-900 mb-2 border-b border-gray-100 pb-2">{label}</p>
+        <div className="font-bold text-sm text-gray-900 mb-2 border-b border-gray-100 pb-2">{label}</div>
         <div className="space-y-1.5">
-          <p className="text-xs text-gray-500 flex items-center justify-between gap-4">
+          <div className="text-xs text-gray-500 flex items-center justify-between gap-4">
             <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded bg-indigo-500"/> Ingresos:</span>
             <span className="font-bold text-gray-900">S/ {payload[0].value.toLocaleString("es-PE", { minimumFractionDigits: 2 })}</span>
-          </p>
-          <p className="text-xs text-gray-500 flex items-center justify-between gap-4">
+          </div>
+          <div className="text-xs text-gray-500 flex items-center justify-between gap-4">
             <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded bg-amber-400"/> Unidades:</span>
             <span className="font-semibold text-gray-700">{payload[1].value} uds</span>
-          </p>
+          </div>
         </div>
       </div>
     )

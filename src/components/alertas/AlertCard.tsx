@@ -45,7 +45,7 @@ const severityConfig: Record<
   },
   advertencia: {
     icon: AlertTriangle,
-    borderColor: "border-l-amber-500",
+    borderColor: "border-amber-500",
     badgeBg: "bg-amber-100",
     badgeText: "text-amber-700",
     badgeBorder: "border-amber-200",
