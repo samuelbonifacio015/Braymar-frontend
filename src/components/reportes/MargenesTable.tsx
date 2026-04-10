@@ -32,8 +32,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
     return (
       <div className="bg-white/95 backdrop-blur-md border border-gray-100 p-3.5 rounded-xl shadow-[0_12px_24px_-4px_rgba(0,0,0,0.1)] outline-none min-w-[220px]">
-        <p className="font-bold text-sm text-gray-900 mb-3 border-b border-gray-100 pb-2">{label}</p>
-        
+        <div className="font-bold text-sm text-gray-900 mb-3 border-b border-gray-100 pb-2">{label}</div>
+
         <div className="space-y-3">
           <div className="flex flex-col gap-1">
             <div className="flex items-center justify-between text-xs">

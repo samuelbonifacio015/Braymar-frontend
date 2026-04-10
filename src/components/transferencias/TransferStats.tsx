@@ -7,9 +7,12 @@ interface TransferStatsProps {
 }
 
 export function TransferStats({ transfers }: TransferStatsProps) {
-  const pending = transfers.filter((t) => t.status === "pending").length
-  const completed = transfers.filter((t) => t.status === "completed").length
-  const cancelled = transfers.filter((t) => t.status === "cancelled").length
+  // Exclude archived transfers from stats
+  const activeTransfers = transfers.filter((t) => t.archived !== "archived")
+  
+  const pending = activeTransfers.filter((t) => t.status === "pending").length
+  const completed = activeTransfers.filter((t) => t.status === "completed").length
+  const cancelled = activeTransfers.filter((t) => t.status === "cancelled").length
 
   const cards = [
     {
