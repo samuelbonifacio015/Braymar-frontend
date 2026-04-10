@@ -32,14 +32,14 @@ export default function ReportesPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f8fafc]">
-      <Topbar title="Dashboard de Inteligencia" searchQuery="" onSearchChange={() => {}} />
+      <Topbar title="Dashboard de Reportes" searchQuery="" onSearchChange={() => {}} />
 
       <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto w-full">
         
         {/* Controles de Vista */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-black text-gray-900 tracking-tight">Análisis Operativo</h1>
+            <h1 className="text-2xl font-black text-gray-900 tracking-tight">Análisis de Reportes</h1>
             <p className="text-sm font-medium text-gray-500 mt-1">Métricas de rentabilidad y capitalizaciones en tiempo real.</p>
           </div>
           <ReportFilters
