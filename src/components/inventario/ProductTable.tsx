@@ -79,7 +79,9 @@ export function ProductTable({ products, onShowPrice }: ProductTableProps) {
 
   return (
     <>
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      {/* Desktop table / Mobile cards */}
+      {/* Desktop table */}
+      <div className="hidden md:block bg-white rounded-lg border border-gray-200 overflow-hidden">
         <Table>
           <TableHeader className="bg-gray-50/50">
             <TableRow className="hover:bg-transparent">
@@ -150,26 +152,104 @@ export function ProductTable({ products, onShowPrice }: ProductTableProps) {
         </Table>
       </div>
 
+      {/* Mobile: stacked cards */}
+      <div className="md:hidden space-y-3">
+        {products.length === 0 ? (
+          <div className="text-center py-12 text-gray-500 bg-card rounded-lg border">
+            No se encontraron productos con los filtros actuales.
+          </div>
+        ) : (
+          products.map((product) => (
+            <div
+              key={product.id}
+              className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 active:scale-[0.99] transition-transform"
+            >
+              {/* Header: Product info */}
+              <div className="flex items-start gap-3">
+                <div className="h-12 w-12 relative bg-gray-100 rounded-md border border-gray-200 flex items-center justify-center overflow-hidden shrink-0">
+                  <div className="w-7 h-7 bg-orange-200 rounded-sm"></div>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-gray-900 leading-tight truncate">{product.name}</p>
+                  <p className="text-xs text-brand-600 mt-0.5">{product.category}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">SKU: {product.sku}</p>
+                </div>
+              </div>
+
+              {/* Details grid */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Stock</p>
+                  <StockBadge status={product.stockStatus} stock={product.stock} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Ubicación</p>
+                  <p className="text-sm text-gray-600 mt-0.5">{product.location}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Precio Unit.</p>
+                  <p className="text-sm font-medium text-gray-900 mt-0.5">S/ {product.unitPrice.toFixed(2)}</p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
+                {onShowPrice && (
+                  <button
+                    onClick={() => onShowPrice(product)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors min-h-[44px] active:scale-[0.98]"
+                    title="Ver precios"
+                  >
+                    <DollarSign size={16} /> Precios
+                  </button>
+                )}
+                <button
+                  onClick={() => { setEditingProduct({...product}); setEditImageFile(null) }}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-gray-600 hover:text-brand-600 hover:bg-brand-50 rounded-md transition-colors min-h-[44px] active:scale-[0.98]"
+                  title="Editar"
+                >
+                  <Pencil size={16} /> Editar
+                </button>
+                <button
+                  onClick={() => setHistoryProduct(product)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-gray-600 hover:text-brand-600 hover:bg-brand-50 rounded-md transition-colors min-h-[44px] active:scale-[0.98]"
+                  title="Historial"
+                >
+                  <Clock size={16} /> Historial
+                </button>
+                <button
+                  onClick={() => setDeletingProduct(product)}
+                  className="flex items-center justify-center p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors min-h-[44px] min-w-[44px] active:scale-[0.98]"
+                  title="Eliminar"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
       {/* Edit Dialog */}
       <Dialog open={!!editingProduct} onOpenChange={(open) => !open && (setEditingProduct(null), setEditImageFile(null))}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Editar Producto</DialogTitle>
+        <DialogContent className="max-w-xl sm:max-h-[85vh] max-h-[90dvh] flex flex-col">
+          <DialogHeader className="pb-3 border-b">
+            <DialogTitle className="text-xl">Editar Producto</DialogTitle>
             <DialogDescription>Modifique los campos del producto y guarde los cambios.</DialogDescription>
           </DialogHeader>
           {editingProduct && (
-            <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
+            <div className="grid gap-4 py-4 overflow-y-auto flex-1 pr-2">
               {/* Row 1: Name */}
               <div className="grid gap-2">
                 <label className="text-sm font-medium">Nombre *</label>
-                <Input value={editingProduct.name} onChange={e => setEditingProduct({...editingProduct, name: e.target.value})} />
+                <Input value={editingProduct.name} onChange={e => setEditingProduct({...editingProduct, name: e.target.value})} className="h-11 min-h-[44px]" />
               </div>
 
               {/* Row 2: Category */}
               <div className="grid gap-2">
                 <label className="text-sm font-medium">Categoría *</label>
                 <Select value={editingProduct.categoryId} onValueChange={(v: string | null) => v && setEditingProduct({...editingProduct, categoryId: v})}>
-                  <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectTrigger className="h-11 min-h-[44px]"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                   <SelectContent>
                     {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                   </SelectContent>
@@ -180,7 +260,7 @@ export function ProductTable({ products, onShowPrice }: ProductTableProps) {
               <div className="grid gap-2">
                 <label className="text-sm font-medium">Ubicación *</label>
                 <Select value={editingProduct.location} onValueChange={(v: string | null) => v && setEditingProduct({...editingProduct, location: v as Location})}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-11 min-h-[44px]"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Almacén Tienda">Almacén Tienda</SelectItem>
                     <SelectItem value="Cochera">Cochera</SelectItem>
@@ -190,28 +270,28 @@ export function ProductTable({ products, onShowPrice }: ProductTableProps) {
                 </Select>
               </div>
 
-              {/* Row 4: Stock + Unit Price */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* Row 4: Stock + Unit Price - stack on mobile */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <label className="text-sm font-medium">Stock</label>
-                  <Input type="number" min="0" value={editingProduct.stock} onChange={e => setEditingProduct({...editingProduct, stock: parseInt(e.target.value) || 0})} />
+                  <Input type="number" inputMode="numeric" min="0" value={editingProduct.stock} onChange={e => setEditingProduct({...editingProduct, stock: parseInt(e.target.value) || 0})} className="h-11 min-h-[44px]" />
                 </div>
                 <div className="grid gap-2">
                   <label className="text-sm font-medium">Precio Unit. (S/)</label>
-                  <Input type="number" step="0.01" value={editingProduct.unitPrice} onChange={e => setEditingProduct({...editingProduct, unitPrice: parseFloat(e.target.value) || 0})} />
+                  <Input type="number" inputMode="decimal" step="0.01" value={editingProduct.unitPrice} onChange={e => setEditingProduct({...editingProduct, unitPrice: parseFloat(e.target.value) || 0})} className="h-11 min-h-[44px]" />
                 </div>
               </div>
 
               {/* Row 5: Wholesale Price */}
               <div className="grid gap-2">
                 <label className="text-sm font-medium">Precio Mayorista (S/)</label>
-                <Input type="number" step="0.01" value={editingProduct.wholesalePrice} onChange={e => setEditingProduct({...editingProduct, wholesalePrice: parseFloat(e.target.value) || 0})} />
+                <Input type="number" inputMode="decimal" step="0.01" value={editingProduct.wholesalePrice} onChange={e => setEditingProduct({...editingProduct, wholesalePrice: parseFloat(e.target.value) || 0})} className="h-11 min-h-[44px]" />
               </div>
 
               {/* Row 6: Units per Box */}
               <div className="grid gap-2">
                 <label className="text-sm font-medium">Unds. por caja</label>
-                <Input type="number" min="1" value={editingProduct.unitsPerBox ?? ""} onChange={e => setEditingProduct({...editingProduct, unitsPerBox: parseInt(e.target.value) || undefined})} placeholder="Ej. 24" />
+                <Input type="number" inputMode="numeric" min="1" value={editingProduct.unitsPerBox ?? ""} onChange={e => setEditingProduct({...editingProduct, unitsPerBox: parseInt(e.target.value) || undefined})} placeholder="Ej. 24" className="h-11 min-h-[44px]" />
               </div>
 
               {/* Row 7: Image */}
@@ -219,7 +299,7 @@ export function ProductTable({ products, onShowPrice }: ProductTableProps) {
               <div className="grid gap-2">
                 <label className="text-sm font-medium">Imagen del producto</label>
                 <div className="flex items-center gap-3">
-                  <Button type="button" variant="outline" size="sm" className="gap-2 h-9" onClick={() => editFileInputRef.current?.click()}>
+                  <Button type="button" variant="outline" size="sm" className="gap-2 h-11 sm:h-10 min-w-[44px]" onClick={() => editFileInputRef.current?.click()}>
                     <Upload size={14} />
                     {editImageFile ? editImageFile.name : editingProduct.imageUrl ? "Cambiar imagen" : "Seleccionar"}
                   </Button>
@@ -235,9 +315,9 @@ export function ProductTable({ products, onShowPrice }: ProductTableProps) {
               </div>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingProduct(null)}>Cancelar</Button>
-            <Button className="bg-brand-600 hover:bg-brand-700 text-white" onClick={handleSaveEdit} disabled={savePending}>
+          <DialogFooter className="pt-3 border-t gap-2">
+            <Button variant="outline" onClick={() => setEditingProduct(null)} className="h-11 sm:h-10 min-h-[44px]">Cancelar</Button>
+            <Button className="bg-brand-600 hover:bg-brand-700 text-white h-11 sm:h-10 min-h-[44px]" onClick={handleSaveEdit} disabled={savePending}>
               {savePending ? "Guardando..." : "Guardar Cambios"}
             </Button>
           </DialogFooter>

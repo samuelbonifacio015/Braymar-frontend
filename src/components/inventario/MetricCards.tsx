@@ -1,4 +1,5 @@
 import { Package, AlertTriangle, AlertCircle, DollarSign } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface MetricCardsProps {
   total: number
@@ -52,14 +53,18 @@ export function MetricCards({ total, lowStock, agotados, totalValue }: MetricCar
       {metrics.map((m) => (
         <div
           key={m.label}
-          className="bg-card rounded-xl border border-border/40 shadow-sm p-4 flex items-center gap-3"
+          className={cn(
+            "bg-card rounded-xl border border-border/40 shadow-sm",
+            "p-3 sm:p-4 flex items-center gap-3",
+            "active:scale-[0.99] transition-transform"
+          )}
         >
           <div className={`shrink-0 w-10 h-10 rounded-full ${m.bgIcon} flex items-center justify-center`}>
             <m.icon size={18} className={m.color} />
           </div>
           <div className="min-w-0">
-            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{m.label}</p>
-            <p className={`text-xl font-semibold ${m.color} leading-tight tabular-nums`}>{m.value}</p>
+            <p className="text-[10px] sm:text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{m.label}</p>
+            <p className={`text-lg sm:text-xl font-semibold ${m.color} leading-tight tabular-nums`}>{m.value}</p>
           </div>
         </div>
       ))}
