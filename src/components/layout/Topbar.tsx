@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { useGlobalPreferences } from "@/context/PreferencesContext"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
+import { SearchModal } from "./SearchModal"
 
 interface TopbarProps {
   title: string
@@ -18,6 +19,7 @@ export function Topbar({ title, searchQuery, onSearchChange }: TopbarProps) {
   const { preferences } = useGlobalPreferences()
   const profile = preferences.profile
   const [searchFocused, setSearchFocused] = useState(false)
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
 
   const initials = profile?.name
     ? profile.name
@@ -64,9 +66,24 @@ export function Topbar({ title, searchQuery, onSearchChange }: TopbarProps) {
 
       {/* Right section: Search + Actions */}
       <div className="flex items-center gap-2 sm:gap-4 flex-1 lg:flex-none lg:w-auto justify-end">
-        {/* Search bar: full-width on mobile, fixed on desktop */}
+        {/* Mobile search button */}
+        <button
+          onClick={() => setMobileSearchOpen(true)}
+          className={cn(
+            "sm:hidden p-2 rounded-full",
+            "min-w-[44px] min-h-[44px] flex items-center justify-center",
+            "text-gray-500 hover:text-gray-900 hover:bg-gray-100",
+            "active:scale-95 transition-all",
+            "touch-manipulation"
+          )}
+          aria-label="Abrir búsqueda"
+        >
+          <Search size={20} />
+        </button>
+
+        {/* Search bar: hidden on mobile, visible on desktop */}
         <div className={cn(
-          "relative",
+          "hidden sm:block relative",
           "w-full sm:w-80 lg:w-96",
           "transition-all duration-200"
         )}>
@@ -121,6 +138,14 @@ export function Topbar({ title, searchQuery, onSearchChange }: TopbarProps) {
           </Avatar>
         </div>
       </div>
+
+      {/* Mobile Search Modal */}
+      <SearchModal
+        open={mobileSearchOpen}
+        onOpenChange={setMobileSearchOpen}
+        searchQuery={searchQuery || ""}
+        onSearchChange={onSearchChange || (() => {})}
+      />
     </header>
   )
 }
